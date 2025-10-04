@@ -6,12 +6,12 @@ using simple probability averaging.
 import numpy as np
 
 
-def predict_ensembler_models(models, X, threshold: float = 0.5):
+def predict_ensembler_models(models, X):
     """
     Perform an average ensemble of model predictions.
     """
     # Collect predicted probabilities from each model
-    preds = [(m.predict(X) > 0).astype(int) for m in models]
+    preds = [m.predict(X) for m in models]
 
     # Average across models
     avg_preds = np.mean(preds, axis=0)

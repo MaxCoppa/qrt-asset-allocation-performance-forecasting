@@ -24,46 +24,70 @@ def model_selection_using_kfold(
     target: str,
     features: list[str],
     model_type: str,
+    feat_engineering=None,
     unique_id: str = "ROW_ID",
     plot_ft_importance: bool = False,
+    n_splits: int = 4,
 ):
     """
-    Perform K-Fold cross-validation for model selection.
+    Perform K-Fold cross-validation for model selection,
+    splitting folds on unique values (e.g., dates).
 
     Parameters
     ----------
-    train : pd.DataFrame
+    X : pd.DataFrame
         Training dataset.
+    y : pd.DataFrame
+        Target dataset.
     target : str
         Target column name.
     features : list of str
         Feature column names.
     model_type : str
         One of {"rf", "xgb", "lgbm", "cat"}.
-    unique_id : str, default="ID"
+    feat_engineering : callable, optional
+        Feature engineering function applied per fold.
+    unique_id : str, default="ROW_ID"
         Column used to split folds (e.g., IDs, dates).
     plot_ft_importance : bool, default=False
         If True, plots average feature importance across folds.
+    n_splits : int, default=4
+        Number of KFold splits.
     """
-    X_train = X[features].copy()
-    y_train = y[target].copy()
-    unique_ids = X[unique_id].unique()
+    X_train = X.copy()
+    y_train = y.copy()
 
-    n_splits = 4
+    # Get the unique identifiers (e.g. dates)
+    unique_vals = X_train[unique_id].unique()
+
     metrics = {"accuracy": []}
     models = []
 
-    # Define KFold splits on unique identifiers
-    splits = KFold(n_splits=n_splits, random_state=0, shuffle=True).split(unique_ids)
+    # Apply KFold *directly* on the unique values, not their array indices
+    kf = KFold(n_splits=n_splits, random_state=0, shuffle=True)
+    for i, (train_idx, test_idx) in enumerate(kf.split(unique_vals)):
+        # Select the actual values for this fold
+        train_vals = unique_vals[train_idx]
+        test_vals = unique_vals[test_idx]
 
-    for i, (train_idx, test_idx) in enumerate(splits):
-        # Extract fold-specific training and test data
-        X_local_train, y_local_train, _ = get_data(
-            train_idx, unique_ids, X[unique_id], X_train, y_train
-        )
-        X_local_test, y_local_test, local_test_ids = get_data(
-            test_idx, unique_ids, X[unique_id], X_train, y_train
-        )
+        # Build masks by checking membership in the unique_id column
+        train_mask = X_train[unique_id].isin(train_vals)
+        test_mask = X_train[unique_id].isin(test_vals)
+
+        X_local_train = X_train.loc[train_mask].copy()
+        y_local_train = y_train.loc[train_mask].copy()
+        X_local_test = X_train.loc[test_mask].copy()
+        y_local_test = y_train.loc[test_mask].copy()
+
+        if feat_engineering:
+            X_local_train = feat_engineering(X_local_train)
+            X_local_test = feat_engineering(X_local_test)
+
+        X_local_train = X_local_train[features]
+        X_local_test = X_local_test[features]
+
+        y_local_train = y_local_train[target]
+        y_local_test = y_local_test[target]
 
         # Initialize and fit model
         model = get_model(model_type)
@@ -74,14 +98,12 @@ def model_selection_using_kfold(
 
         models.append(model)
 
-        # Collect metrics
         acc = model_eval["accuracy"]
-
         metrics["accuracy"].append(acc)
 
-        print(f"Fold {i+1} - Accuracy: {acc*100:.2f}% | ")
+        print(f"Fold {i+1} - Accuracy: {acc*100:.2f}%")
 
-    # Aggregate cross-validation results
+    # Aggregate results
     for m in metrics:
         mean = np.mean(metrics[m]) * (100 if m == "accuracy" else 1)
         std = np.std(metrics[m]) * (100 if m == "accuracy" else 1)
