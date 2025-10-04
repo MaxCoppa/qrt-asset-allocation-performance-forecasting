@@ -23,6 +23,7 @@ def model_selection_using_kfold(
     y: pd.DataFrame,
     target: str,
     features: list[str],
+    feat_engineering,
     model_type: str,
     unique_id: str = "ROW_ID",
     plot_ft_importance: bool = False,
@@ -45,11 +46,11 @@ def model_selection_using_kfold(
     plot_ft_importance : bool, default=False
         If True, plots average feature importance across folds.
     """
-    X_train = X[features].copy()
-    y_train = y[target].copy()
+    X_train = X.copy()
+    y_train = y.copy()
     unique_ids = X[unique_id].unique()
 
-    n_splits = 8
+    n_splits = 4
     metrics = {"accuracy": []}
     models = []
 
@@ -64,6 +65,12 @@ def model_selection_using_kfold(
         X_local_test, y_local_test, _ = get_data(
             test_idx, unique_ids, X[unique_id], X_train, y_train
         )
+
+        X_local_train = feat_engineering(X_local_train)[features]
+        X_local_test = feat_engineering(X_local_test)[features]
+
+        y_local_train = y_local_train[target]
+        y_local_test = y_local_test[target]
 
         # Initialize and fit model
         model = get_model(model_type)
