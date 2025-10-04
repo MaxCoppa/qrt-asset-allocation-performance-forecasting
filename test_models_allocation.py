@@ -4,13 +4,15 @@ from tree_based_models import model_selection_by_allocation, get_model, evaluate
 
 # %% Load Data
 
-X_train = pd.read_csv("data/X_train.csv")
-X_test = pd.read_csv("data/X_test.csv")
-y_train = pd.read_csv("data/y_train.csv")
+train = pd.read_csv("data/train.csv")
+X_val = pd.read_csv("data/X_val.csv")
+y_val = pd.read_csv("data/y_val.csv")
 
 # %% Configuration
 
-FEATURES = [col for col in X_train.columns if col not in ["ROW_ID", "TS", "ALLOCATION"]]
+features = [
+    col for col in train.columns if col not in ["ROW_ID", "TS", "ALLOCATION", "target"]
+]
 target_name = "target"
 unique_id = "TS"
 model_name = "xgb"
@@ -18,10 +20,9 @@ model_name = "xgb"
 # %% Model Selection Evaluation
 
 model_selection_by_allocation(
-    X=X_train,
-    y=y_train,
+    data=train,
     target=target_name,
-    features=FEATURES,
+    features=features,
     model_type=model_name,
     unique_id=unique_id,
 )

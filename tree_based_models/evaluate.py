@@ -6,7 +6,11 @@ from sklearn.metrics import f1_score, roc_auc_score, accuracy_score
 from .ensemble import predict_ensembler_models
 
 
-def evaluate_model(model, X, y, verbose: bool = False) -> dict:
+from sklearn.metrics import accuracy_score
+from datetime import datetime
+
+
+def evaluate_model(model, X, y, verbose: bool = False, log: bool = False) -> dict:
     """
     Evaluate a single model on given data.
     """
@@ -15,20 +19,25 @@ def evaluate_model(model, X, y, verbose: bool = False) -> dict:
     labels = (y > 0).astype(int)
 
     results = {
-        # "f1": f1_score(labels, preds),
         "accuracy": accuracy_score(labels, preds),
     }
 
+    msg = " | ".join(f"{k}: {v*100:.2f} %" for k, v in results.items())
+
     if verbose:
-        print(
-            "Model evaluation:",
-            " | ".join(f"{k}: {v*100:.2f} %" for k, v in results.items()),
-        )
+        print("Model evaluation:", msg)
+
+    if log:
+        logfile = "predictions/evaluation.log"
+        with open(logfile, "a") as f:
+            f.write(f"{datetime.now()} - Model evaluation: {msg}\n")
 
     return results
 
 
-def evaluate_ensemble_model(models, X, y, verbose: bool = False) -> dict:
+def evaluate_ensemble_model(
+    models, X, y, verbose: bool = False, log: bool = False
+) -> dict:
     """
     Evaluate an ensemble of models using averaged predictions.
 
@@ -40,10 +49,14 @@ def evaluate_ensemble_model(models, X, y, verbose: bool = False) -> dict:
         "accuracy": accuracy_score(labels, avg_preds),
     }
 
+    msg = " | ".join(f"{k}: {v*100:.2f} %" for k, v in results.items())
+
     if verbose:
-        print(
-            "Ensemble evaluation:",
-            " | ".join(f"{k}: {v:.3f}" for k, v in results.items()),
-        )
+        print("Ensemble Model evaluation:", msg)
+
+    if log:
+        logfile = "predictions/evaluation.log"
+        with open(logfile, "a") as f:
+            f.write(f"{datetime.now()} - Model evaluation: {msg}\n")
 
     return results

@@ -10,8 +10,7 @@ from tqdm import tqdm
 
 
 def model_selection_by_allocation(
-    X: pd.DataFrame,
-    y: pd.DataFrame,
+    data: pd.DataFrame,
     target: str,
     features: list[str],
     model_type: str,
@@ -22,15 +21,14 @@ def model_selection_by_allocation(
     Perform K-Fold cross-validation for model selection, separately for each ALLOCATION group.
     At the end, print overall aggregated results across all allocations.
     """
-    train = X.merge(y, on=merge_id)
 
     all_results = {}
     all_models = {}
     all_accuracies = []  # collect accuracies from all allocations
 
-    for alloc in tqdm(X["ALLOCATION"].unique(), desc="Processing allocations"):
+    for alloc in tqdm(data["ALLOCATION"].unique(), desc="Processing allocations"):
         # Filter subset
-        train_sub = train[train["ALLOCATION"] == alloc]
+        train_sub = data[data["ALLOCATION"] == alloc]
 
         # Prepare training sets
         X_train = train_sub[features].copy()
