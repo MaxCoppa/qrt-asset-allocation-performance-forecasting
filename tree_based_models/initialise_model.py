@@ -33,7 +33,6 @@ model_params = {
         "colsample_bytree": 0.8,
         "random_state": 42,
         "verbose": 0,
-        "metric": "mse",
     },
     "cat": {
         "iterations": 100,

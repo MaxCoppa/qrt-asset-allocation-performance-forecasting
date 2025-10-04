@@ -16,12 +16,13 @@ def model_selection_by_allocation(
     features: list[str],
     model_type: str,
     unique_id: str = "ROW_ID",
+    merge_id: str = "ROW_ID",
 ):
     """
     Perform K-Fold cross-validation for model selection, separately for each ALLOCATION group.
     At the end, print overall aggregated results across all allocations.
     """
-    train = X.merge(y, on=unique_id)
+    train = X.merge(y, on=merge_id)
 
     all_results = {}
     all_models = {}

@@ -12,7 +12,7 @@ y_train = pd.read_csv("data/y_train.csv")
 
 FEATURES = [col for col in X_train.columns if col not in ["ROW_ID", "TS", "ALLOCATION"]]
 target_name = "target"
-unique_id = "ROW_ID"
+unique_id = "TS"
 model_name = "xgb"
 
 # %% Model Selection Evaluation

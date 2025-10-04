@@ -1,7 +1,12 @@
 # %%
 import pandas as pd
 from tree_based_models import model_selection_using_kfold, get_model, evaluate_model
-from feature_engineering import encode_allocation, add_average_perf_features
+from feature_engineering import (
+    encode_allocation,
+    add_average_perf_features,
+    split_data,
+    create_mean_allocation,
+)
 
 # %% Load Data
 
@@ -10,19 +15,26 @@ X_test = pd.read_csv("data/X_test.csv")
 y_train = pd.read_csv("data/y_train.csv")
 
 # %%
+n_date_test = X_test["TS"].nunique()
+
+X_train, y_train, X_val, y_val = split_data(X_train, y_train, n_date_test)
+
+# %%
 RET_features = [f"RET_{i}" for i in range(1, 20)]
 SIGNED_VOLUME_features = [f"SIGNED_VOLUME_{i}" for i in range(1, 20)]
 TURNOVER_features = ["AVG_DAILY_TURNOVER"]
 window_sizes = [3, 5, 10, 15, 20]
 # %% Feature Engineering
 
+mean_allocation_return = (
+    X_train.merge(y_train, on="ROW_ID").groupby("ALLOCATION")["target"].mean().to_dict()
+)
+
 
 def feature_engineering(X: pd.DataFrame) -> pd.DataFrame:
-
-    X = X.pipe(
+    X = X.pipe(create_mean_allocation, dict_mean=mean_allocation_return).pipe(
         add_average_perf_features, RET_features=RET_features, window_sizes=window_sizes
     )
-
     return X
 
 
@@ -32,8 +44,8 @@ X_test = feature_engineering(X_test)
 
 features = [col for col in X_test.columns if col not in ["ROW_ID", "TS", "ALLOCATION"]]
 target_name = "target"
-unique_id = "ROW_ID"
-model_name = "lgbm"
+unique_id = "TS"
+model_name = "xgb"
 # %% Model Selection Evaluation
 
 model_selection_using_kfold(
@@ -48,13 +60,16 @@ model_selection_using_kfold(
 )
 # %% Train Model
 
+X_train = feature_engineering(X_train)
+X_val = feature_engineering(X_val)
+
 model = get_model(model_name)
 model.fit(X_train[features], y_train[target_name])
 
 _ = evaluate_model(
     model=model,
-    X=X_train[features],
-    y=y_train[target_name],
+    X=X_val[features],
+    y=y_val[target_name],
     verbose=True,
 )
 # %% Predicion

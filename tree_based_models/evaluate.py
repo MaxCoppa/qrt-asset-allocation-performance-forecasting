@@ -15,14 +15,14 @@ def evaluate_model(model, X, y, verbose: bool = False) -> dict:
     labels = (y > 0).astype(int)
 
     results = {
-        "f1": f1_score(labels, preds),
+        # "f1": f1_score(labels, preds),
         "accuracy": accuracy_score(labels, preds),
     }
 
     if verbose:
         print(
             "Model evaluation:",
-            " | ".join(f"{k}: {v:.3f}" for k, v in results.items()),
+            " | ".join(f"{k}: {v*100:.2f} %" for k, v in results.items()),
         )
 
     return results
@@ -33,11 +33,10 @@ def evaluate_ensemble_model(models, X, y, verbose: bool = False) -> dict:
     Evaluate an ensemble of models using averaged predictions.
 
     """
-    avg_preds = predict_ensembler_models(models=models, X=X)
+    avg_preds = (predict_ensembler_models(models=models, X=X) > 0).astype(int)
     labels = (y > 0).astype(int)
 
     results = {
-        "f1": f1_score(labels, avg_preds),
         "accuracy": accuracy_score(labels, avg_preds),
     }
 
