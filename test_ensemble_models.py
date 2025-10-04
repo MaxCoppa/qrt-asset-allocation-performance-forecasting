@@ -1,36 +1,59 @@
 # %%
 import pandas as pd
 from tree_based_models import get_model, evaluate_ensemble_model
-from feature_engineering import split_data
+from feature_engineering import (
+    encode_allocation,
+    add_average_perf_features,
+    split_data,
+    create_mean_allocation,
+)
 
 # %% Load Data
 
-X_train = pd.read_csv("data/X_train.csv")
-X_test = pd.read_csv("data/X_test.csv")
-y_train = pd.read_csv("data/y_train.csv")
+train = pd.read_csv("data/train.csv")
+X_val = pd.read_csv("data/X_val.csv")
+y_val = pd.read_csv("data/y_val.csv")
 
-# %%
-n_date_test = X_test["TS"].nunique()
+# %% Feature Engineering
 
-X_train, y_train, X_val, y_val = split_data(X_train, y_train, n_date_test)
+RET_features = [f"RET_{i}" for i in range(1, 20)]
+SIGNED_VOLUME_features = [f"SIGNED_VOLUME_{i}" for i in range(1, 20)]
+TURNOVER_features = ["AVG_DAILY_TURNOVER"]
+window_sizes = [3, 5, 10, 15, 20]
+
+
+mean_allocation_return = train.groupby("ALLOCATION")["target"].mean().to_dict()
+
+
+def feature_engineering(X: pd.DataFrame, mean_allocation_return=None) -> pd.DataFrame:
+    X = X.pipe(create_mean_allocation, dict_mean=mean_allocation_return).pipe(
+        add_average_perf_features, RET_features=RET_features, window_sizes=window_sizes
+    )
+    return X
+
+
+train = feature_engineering(train, mean_allocation_return=mean_allocation_return)
+X_val = feature_engineering(X_val, mean_allocation_return=mean_allocation_return)
+
 # %% Configuration
 
-FEATURES = [col for col in X_train.columns if col not in ["ROW_ID", "TS", "ALLOCATION"]]
+features = [
+    col for col in train.columns if col not in ["ROW_ID", "TS", "ALLOCATION", "target"]
+]
 target_name = "target"
-model_names = "xgb:lgbm"
+model_names = "xgb:lgbm:cat"
 models = []
+
+
 # %% Train Model
 
 for model_name in model_names.split(":"):
     model = get_model(model_name)
-    model.fit(X_train[FEATURES], y_train[target_name])
+    model.fit(train[features], train[target_name])
     models.append(model)
 
 _ = evaluate_ensemble_model(
-    models=models,
-    X=X_val[FEATURES],
-    y=y_val[target_name],
-    verbose=True,
+    models=models, X=X_val[features], y=y_val[target_name], verbose=True, log=True
 )
 # %% Predicion
 

@@ -1,4 +1,5 @@
 import pandas as pd
+from typing import Dict, Optional
 
 
 def encode_allocation(df: pd.DataFrame) -> pd.DataFrame:
@@ -20,14 +21,27 @@ def encode_allocation(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def create_mean_allocation(X: pd.DataFrame, dict_mean: dict) -> pd.DataFrame:
+def create_mean_allocation(
+    data: pd.DataFrame, dict_mean: Optional[Dict[str, float]] = None
+) -> pd.DataFrame:
     """
-    Encode the 'ALLOCATION' column by extracting the integer part after the underscore.
-
+    Adds a column `mean_allocation` to the DataFrame by mapping the mean
+    of the `target` column grouped by `ALLOCATION`.
     """
-    if "ALLOCATION" not in X.columns:
+    # Validate required column
+    if "ALLOCATION" not in data.columns:
         raise KeyError("'ALLOCATION' column not found in DataFrame!")
 
-    X["mean_allocation"] = X["ALLOCATION"].map(dict_mean)
+    # Compute mapping dictionary if not provided
+    if dict_mean is None:
+        if "target" not in data.columns:
+            raise KeyError(
+                "'target' column not found in DataFrame when computing means!"
+            )
+        dict_mean = data.groupby("ALLOCATION")["target"].mean().to_dict()
 
-    return X
+    # Map the dictionary to create new column
+    data = data.copy()
+    data["mean_allocation"] = data["ALLOCATION"].map(dict_mean)
+
+    return data

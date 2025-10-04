@@ -19,8 +19,7 @@ from .evaluate import evaluate_model
 
 
 def model_selection_using_kfold(
-    X: pd.DataFrame,
-    y: pd.DataFrame,
+    data: pd.DataFrame,
     target: str,
     features: list[str],
     model_type: str,
@@ -54,11 +53,9 @@ def model_selection_using_kfold(
     n_splits : int, default=4
         Number of KFold splits.
     """
-    X_train = X.copy()
-    y_train = y.copy()
 
     # Get the unique identifiers (e.g. dates)
-    unique_vals = X_train[unique_id].unique()
+    unique_vals = data[unique_id].unique()
 
     metrics = {"accuracy": []}
     models = []
@@ -71,23 +68,25 @@ def model_selection_using_kfold(
         test_vals = unique_vals[test_idx]
 
         # Build masks by checking membership in the unique_id column
-        train_mask = X_train[unique_id].isin(train_vals)
-        test_mask = X_train[unique_id].isin(test_vals)
+        train_mask = data[unique_id].isin(train_vals)
+        test_mask = data[unique_id].isin(test_vals)
 
-        X_local_train = X_train.loc[train_mask].copy()
-        y_local_train = y_train.loc[train_mask].copy()
-        X_local_test = X_train.loc[test_mask].copy()
-        y_local_test = y_train.loc[test_mask].copy()
+        data_local_train = data.loc[train_mask].copy()
+        data_local_test = data.loc[test_mask].copy()
 
         if feat_engineering:
-            X_local_train = feat_engineering(X_local_train)
-            X_local_test = feat_engineering(X_local_test)
+            data_local_train = feat_engineering(data_local_train)
+            mean_allocation_return = (
+                data_local_train.groupby("ALLOCATION")["target"].mean().to_dict()
+            )
 
-        X_local_train = X_local_train[features]
-        X_local_test = X_local_test[features]
+            data_local_test = feat_engineering(data_local_test, mean_allocation_return)
 
-        y_local_train = y_local_train[target]
-        y_local_test = y_local_test[target]
+        X_local_train = data_local_train[features]
+        X_local_test = data_local_test[features]
+
+        y_local_train = data_local_train[target]
+        y_local_test = data_local_test[target]
 
         # Initialize and fit model
         model = get_model(model_type)
