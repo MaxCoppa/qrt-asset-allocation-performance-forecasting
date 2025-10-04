@@ -17,14 +17,12 @@ model_params = {
         "random_state": 42,
     },
     "xgb": {
-        "n_estimators": 100,  # Number of boosting rounds (trees to build)
-        "max_depth": 5,  # Maximum depth of each decision tree
-        "learning_rate": 0.05,  # Step size shrinkage
-        "subsample": 0.8,  # Fraction of training samples used per boosting round
-        "colsample_bytree": 0.8,  # Fraction of features (columns) used per tree
-        "eval_metric": "aucpr",  # Evaluation metric
-        "random_state": 42,  # Random seed for reproducibility
-        "scale_pos_weight": 5,  # Weighting factor to handle class imbalance
+        "n_estimators": 100,
+        "max_depth": 5,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "random_state": 42,
     },
     "lgbm": {
         "n_estimators": 100,
@@ -33,17 +31,15 @@ model_params = {
         "subsample": 0.8,
         "colsample_bytree": 0.8,
         "random_state": 42,
-        "scale_pos_weight": 5,
+        # "scale_pos_weight": 5,
         "verbose": 0,
     },
     "cat": {
         "iterations": 100,
         "depth": 6,
         "learning_rate": 0.05,
-        "eval_metric": "F1",
         "random_seed": 42,
         "verbose": 0,
-        "scale_pos_weight": 5,
         "train_dir": None,
     },
 }
