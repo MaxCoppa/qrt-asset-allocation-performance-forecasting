@@ -6,7 +6,7 @@ using simple probability averaging.
 import numpy as np
 
 
-def predict_ensembler_models(models, X, threshold: float = 0.5):
+def predict_ensembler_models(models, X):
     """
     Perform an average ensemble of model predictions.
     """

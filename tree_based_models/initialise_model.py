@@ -15,6 +15,7 @@ model_params = {
         "n_estimators": 100,
         "max_depth": 5,
         "random_state": 42,
+        "metric": "mse",
     },
     "xgb": {
         "n_estimators": 100,
@@ -23,6 +24,7 @@ model_params = {
         "subsample": 0.8,
         "colsample_bytree": 0.8,
         "random_state": 42,
+        "metric": "mse",
     },
     "lgbm": {
         "n_estimators": 100,
@@ -31,8 +33,8 @@ model_params = {
         "subsample": 0.8,
         "colsample_bytree": 0.8,
         "random_state": 42,
-        # "scale_pos_weight": 5,
         "verbose": 0,
+        "metric": "mse",
     },
     "cat": {
         "iterations": 100,
@@ -41,6 +43,7 @@ model_params = {
         "random_seed": 42,
         "verbose": 0,
         "train_dir": None,
+        "metric": "mse",
     },
 }
 

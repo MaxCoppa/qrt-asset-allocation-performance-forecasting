@@ -49,7 +49,7 @@ def model_selection_using_kfold(
     y_train = y[target].copy()
     unique_ids = X[unique_id].unique()
 
-    n_splits = 4
+    n_splits = 8
     metrics = {"accuracy": []}
     models = []
 
@@ -61,7 +61,7 @@ def model_selection_using_kfold(
         X_local_train, y_local_train, _ = get_data(
             train_idx, unique_ids, X[unique_id], X_train, y_train
         )
-        X_local_test, y_local_test, local_test_ids = get_data(
+        X_local_test, y_local_test, _ = get_data(
             test_idx, unique_ids, X[unique_id], X_train, y_train
         )
 

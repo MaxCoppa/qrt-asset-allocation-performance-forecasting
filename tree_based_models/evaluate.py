@@ -6,7 +6,7 @@ from sklearn.metrics import f1_score, roc_auc_score, accuracy_score
 from .ensemble import predict_ensembler_models
 
 
-def evaluate_model(model, X, y, threshold: float = 0.5, verbose: bool = False) -> dict:
+def evaluate_model(model, X, y, verbose: bool = False) -> dict:
     """
     Evaluate a single model on given data.
     """
@@ -28,14 +28,12 @@ def evaluate_model(model, X, y, threshold: float = 0.5, verbose: bool = False) -
     return results
 
 
-def evaluate_ensemble_model(
-    models, X, y, threshold: float = 0.5, verbose: bool = False
-) -> dict:
+def evaluate_ensemble_model(models, X, y, verbose: bool = False) -> dict:
     """
     Evaluate an ensemble of models using averaged predictions.
 
     """
-    avg_preds = predict_ensembler_models(models=models, X=X, threshold=threshold)
+    avg_preds = predict_ensembler_models(models=models, X=X)
     labels = (y > 0).astype(int)
 
     results = {

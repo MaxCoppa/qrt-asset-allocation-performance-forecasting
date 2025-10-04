@@ -31,10 +31,16 @@ model_selection_using_kfold(
 model = get_model(model_name)
 model.fit(X_train[FEATURES], y_train[target_name])
 
-evaluate_model(model, X_train[FEATURES], y_train[target_name])
+_ = evaluate_model(
+    model=model,
+    X=X_train[FEATURES],
+    y=y_train[target_name],
+    verbose=True,
+)
 # %% Predicion
 
 preds_sub = model.predict(X_test[FEATURES])
 preds_sub = pd.DataFrame(preds_sub, index=X_test[unique_id], columns=[target_name])
-# (preds_sub > 0).astype(int).to_csv("preds_test.csv")
+
+# (preds_sub > 0).astype(int).to_csv("data/preds_test.csv")
 # %%
