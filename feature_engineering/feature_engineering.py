@@ -48,3 +48,42 @@ def add_average_volume_features(
         X[alloc_col] = X.groupby(group_col)[avg_col].transform("mean")
 
     return X
+
+
+def add_near_time_comparison_features(
+    X: pd.DataFrame,
+    RET_features: list,
+    SIGNED_VOLUME_features: list,
+    pairs: list = [(1, 2)],  # default RET_1 vs RET_2
+):
+    """
+    Add near-time comparison features (differences and ratios)
+    between RETs, volumes, and optionally RET*volume impacts.
+
+    """
+    X = X.copy()
+
+    for i, j in pairs:
+        # Return comparisons
+        X[f"RET_diff_{i}_{j}"] = X[RET_features[i]] - X[RET_features[j]]
+        X[f"RET_ratio_{i}_{j}"] = X[RET_features[i]] / (X[RET_features[j]] + 1e-8)
+
+        # Volume-only comparisons (optional)
+        X[f"VOL_diff_{i}_{j}"] = (
+            X[SIGNED_VOLUME_features[i]] - X[SIGNED_VOLUME_features[j]]
+        )
+        X[f"VOL_ratio_{i}_{j}"] = X[SIGNED_VOLUME_features[i]] / (
+            X[SIGNED_VOLUME_features[j]] + 1e-8
+        )
+
+        # Impact features (RET * VOLUME)
+
+        # Create per-lag impacts
+        imp_i = X[RET_features[i]] * X[SIGNED_VOLUME_features[i]]
+        imp_j = X[RET_features[j]] * X[SIGNED_VOLUME_features[j]]
+
+        # Compare impacts
+        X[f"IMPACT_diff_{i}_{j}"] = imp_i - imp_j
+        X[f"IMPACT_ratio_{i}_{j}"] = imp_i / (imp_j + 1e-8)
+
+    return X

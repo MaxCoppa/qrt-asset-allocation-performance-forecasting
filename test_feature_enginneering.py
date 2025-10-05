@@ -6,6 +6,7 @@ from feature_engineering import (
     add_average_perf_features,
     create_allocation_features,
     add_average_volume_features,
+    add_near_time_comparison_features,
 )
 
 
@@ -22,13 +23,12 @@ TURNOVER_features = ["AVG_DAILY_TURNOVER"]
 
 window_sizes = [3, 5, 10, 15, 20]
 
-features = RET_features + TURNOVER_features 
+features = RET_features + TURNOVER_features + SIGNED_VOLUME_features
+
 features = features + [f"AVERAGE_PERF_{i}" for i in window_sizes]
 features = features + [f"ALLOCATIONS_AVERAGE_PERF_{i}" for i in window_sizes]
-features = features + [f"AVERAGE_VOLUME_{i}" for i in window_sizes]
-features = features + [f"ALLOCATIONS_AVERAGE_VOLUME_{i}" for i in window_sizes]
-features = features + [f"GROUP_ALLOCATION_PERF_{i}" for i in window_sizes]
-features = features + ["AVG_DAILY_TURNOVER_ALLOCATION"]
+# features = features + ["RET_diff_1_2","RET_ratio_1_2","VOL_diff_1_2","VOL_ratio_1_2","IMPACT_diff_1_2","IMPACT_ratio_1_2"]
+# features = features + ["AVG_DAILY_TURNOVER_ALLOCATION"]
 # %% Feature Engineering
 
 
@@ -42,13 +42,11 @@ def feature_engineering(
             window_sizes=window_sizes,
             group_col="TS",
         )
-        .pipe(
-            add_average_volume_features,
-            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
-            window_sizes=window_sizes,
-            group_col="TS",
-        )
-        .pipe(create_allocation_features, window_sizes=window_sizes)
+        # .pipe(
+        #     add_near_time_comparison_features,
+        #     RET_features=RET_features,
+        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        # )
     )
     return X
 
@@ -57,7 +55,7 @@ def feature_engineering(
 
 target_name = "target"
 unique_id = "TS"
-model_name = "xgb"
+model_name = "lgbm"
 # %% Model Selection Evaluation
 
 model_selection_using_kfold(
@@ -68,7 +66,7 @@ model_selection_using_kfold(
     model_type=model_name,
     unique_id=unique_id,
     plot_ft_importance=True,
-    n_splits=8,
+    n_splits=6,
 )
 # %% Train Model
 

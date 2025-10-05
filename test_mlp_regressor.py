@@ -27,7 +27,10 @@ X_val = scaler.transform(X_val[features])
 y_val = y_val[target_name]
 
 m = MLPRegressor(
-    hidden_layer_sizes=(100,50,),
+    hidden_layer_sizes=(
+        100,
+        50,
+    ),
     solver="adam",
     learning_rate_init=0.5,
     alpha=100,
