@@ -22,7 +22,7 @@ TURNOVER_features = ["AVG_DAILY_TURNOVER"]
 
 window_sizes = [3, 5, 10, 15, 20]
 
-features = RET_features + TURNOVER_features + SIGNED_VOLUME_features
+features = RET_features + TURNOVER_features 
 features = features + [f"AVERAGE_PERF_{i}" for i in window_sizes]
 features = features + [f"ALLOCATIONS_AVERAGE_PERF_{i}" for i in window_sizes]
 features = features + [f"AVERAGE_VOLUME_{i}" for i in window_sizes]
@@ -57,7 +57,7 @@ def feature_engineering(
 
 target_name = "target"
 unique_id = "TS"
-model_name = "lgbm"
+model_name = "xgb"
 # %% Model Selection Evaluation
 
 model_selection_using_kfold(

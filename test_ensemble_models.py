@@ -2,9 +2,7 @@
 import pandas as pd
 from tree_based_models import get_model, evaluate_ensemble_model
 from feature_engineering import (
-    encode_allocation,
     add_average_perf_features,
-    split_data,
     create_mean_allocation,
 )
 
@@ -41,7 +39,7 @@ features = [
     col for col in train.columns if col not in ["ROW_ID", "TS", "ALLOCATION", "target"]
 ]
 target_name = "target"
-model_names = "xgb:lgbm:cat"
+model_names = "xgb:lgbm"
 models = []
 
 
