@@ -20,18 +20,13 @@ TURNOVER_features = ["AVG_DAILY_TURNOVER"]
 window_sizes = [3, 5, 10, 15, 20]
 
 
-mean_allocation_return = train.groupby("ALLOCATION")["target"].mean().to_dict()
-
-
-def feature_engineering(X: pd.DataFrame, mean_allocation_return=None) -> pd.DataFrame:
-    X = X.pipe(create_mean_allocation, dict_mean=mean_allocation_return).pipe(
-        add_average_perf_features, RET_features=RET_features, window_sizes=window_sizes
-    )
+def feature_engineering(X: pd.DataFrame) -> pd.DataFrame:
+    X = X.pipe(add_average_perf_features, RET_features=RET_features)
     return X
 
 
-train = feature_engineering(train, mean_allocation_return=mean_allocation_return)
-X_val = feature_engineering(X_val, mean_allocation_return=mean_allocation_return)
+train = feature_engineering(train)
+X_val = feature_engineering(X_val)
 
 # %% Configuration
 
