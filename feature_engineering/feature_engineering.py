@@ -25,8 +25,26 @@ def add_average_perf_features(
         # Compute group mean of these averages
         X[alloc_col] = X.groupby(group_col)[avg_col].transform("mean")
 
+    return X
+
+
+def add_average_volume_features(
+    X: pd.DataFrame,
+    SIGNED_VOLUME_features: list,
+    window_sizes: list = [3, 5, 10, 15, 20],
+    group_col: str = "TS",
+):
+
+    X = X.copy()
+
     for i in window_sizes:
-        avg_col = f"AVERAGE_PERF_{i}"
-        alloc_col = f"ALLOCATIONS_AVERAGE_PERF_{i}"
+        avg_col = f"AVERAGE_VOLUME_{i}"
+        alloc_col = f"ALLOCATIONS_AVERAGE_VOLUME_{i}"
+
+        # Compute average of first i return features
+        X[avg_col] = X[SIGNED_VOLUME_features[:i]].mean(axis=1)
+
+        # Compute group mean of these averages
+        X[alloc_col] = X.groupby(group_col)[avg_col].transform("mean")
 
     return X

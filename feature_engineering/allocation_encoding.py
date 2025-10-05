@@ -45,3 +45,30 @@ def create_mean_allocation(
     data["mean_allocation"] = data["ALLOCATION"].map(dict_mean)
 
     return data
+
+
+def create_allocation_features(
+    data: pd.DataFrame,
+    window_sizes: list = [3, 5, 10, 15, 20],
+) -> pd.DataFrame:
+    """
+    Adds a column `mean_allocation` to the DataFrame by mapping the mean
+    of the `target` column grouped by `ALLOCATION`.
+    """
+    # Validate required column
+    if "ALLOCATION" not in data.columns:
+        raise KeyError("'ALLOCATION' column not found in DataFrame!")
+
+    dict_mean = data.groupby("ALLOCATION")["AVG_DAILY_TURNOVER"].mean().to_dict()
+
+    # Map the dictionary to create new column
+    data["AVG_DAILY_TURNOVER_ALLOCATION"] = data["ALLOCATION"].map(dict_mean)
+
+    for i in window_sizes:
+        avg_col = f"RET_{i}"
+        alloc_col = f"GROUP_ALLOCATION_PERF_{i}"
+
+        # Compute group mean of these averages
+        data[alloc_col] = data.groupby("ALLOCATION")[avg_col].transform("mean")
+
+    return data

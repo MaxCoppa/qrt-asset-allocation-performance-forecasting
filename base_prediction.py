@@ -14,9 +14,10 @@ y_val = pd.read_csv("data/y_val.csv")
 features = [
     col for col in train.columns if col not in ["ROW_ID", "TS", "ALLOCATION", "target"]
 ]
+
 target_name = "target"
 unique_id = "TS"
-model_name = "cat"
+model_name = "ridge"
 
 # %% Model Selection Evaluation
 

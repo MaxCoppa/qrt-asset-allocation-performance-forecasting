@@ -26,7 +26,7 @@ def model_selection_using_kfold(
     feat_engineering=None,
     unique_id: str = "ROW_ID",
     plot_ft_importance: bool = False,
-    n_splits: int = 4,
+    n_splits: int = 8,
 ):
     """
     Perform K-Fold cross-validation for model selection,
@@ -76,11 +76,7 @@ def model_selection_using_kfold(
 
         if feat_engineering:
             data_local_train = feat_engineering(data_local_train)
-            mean_allocation_return = (
-                data_local_train.groupby("ALLOCATION")["target"].mean().to_dict()
-            )
-
-            data_local_test = feat_engineering(data_local_test, mean_allocation_return)
+            data_local_test = feat_engineering(data_local_test)
 
         X_local_train = data_local_train[features]
         X_local_test = data_local_test[features]

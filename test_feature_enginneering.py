@@ -4,8 +4,10 @@ from tree_based_models import model_selection_using_kfold, get_model, evaluate_m
 from feature_engineering import (
     encode_allocation,
     add_average_perf_features,
-    create_mean_allocation,
+    create_allocation_features,
+    add_average_volume_features,
 )
+
 
 # %% Load Data
 
@@ -17,27 +19,45 @@ y_val = pd.read_csv("data/y_val.csv")
 RET_features = [f"RET_{i}" for i in range(1, 20)]
 SIGNED_VOLUME_features = [f"SIGNED_VOLUME_{i}" for i in range(1, 20)]
 TURNOVER_features = ["AVG_DAILY_TURNOVER"]
+
 window_sizes = [3, 5, 10, 15, 20]
+
+features = RET_features + TURNOVER_features + SIGNED_VOLUME_features
+features = features + [f"AVERAGE_PERF_{i}" for i in window_sizes]
+features = features + [f"ALLOCATIONS_AVERAGE_PERF_{i}" for i in window_sizes]
+features = features + [f"AVERAGE_VOLUME_{i}" for i in window_sizes]
+features = features + [f"ALLOCATIONS_AVERAGE_VOLUME_{i}" for i in window_sizes]
+features = features + [f"GROUP_ALLOCATION_PERF_{i}" for i in window_sizes]
+features = features + ["AVG_DAILY_TURNOVER_ALLOCATION"]
 # %% Feature Engineering
 
-mean_allocation_return = train.groupby("ALLOCATION")["target"].mean().to_dict()
 
-
-def feature_engineering(X: pd.DataFrame, mean_allocation_return=None) -> pd.DataFrame:
-    X = X.pipe(create_mean_allocation, dict_mean=mean_allocation_return).pipe(
-        add_average_perf_features, RET_features=RET_features, window_sizes=window_sizes
+def feature_engineering(
+    X: pd.DataFrame,
+) -> pd.DataFrame:
+    X = (
+        X.pipe(
+            add_average_perf_features,
+            RET_features=RET_features,
+            window_sizes=window_sizes,
+            group_col="TS",
+        )
+        .pipe(
+            add_average_volume_features,
+            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+            window_sizes=window_sizes,
+            group_col="TS",
+        )
+        .pipe(create_allocation_features, window_sizes=window_sizes)
     )
     return X
 
 
-X_val = feature_engineering(X_val, mean_allocation_return=mean_allocation_return)
-
 # %% Configuration
 
-features = [col for col in X_val.columns if col not in ["ROW_ID", "TS", "ALLOCATION"]]
 target_name = "target"
 unique_id = "TS"
-model_name = "xgb"
+model_name = "lgbm"
 # %% Model Selection Evaluation
 
 model_selection_using_kfold(
@@ -48,16 +68,18 @@ model_selection_using_kfold(
     model_type=model_name,
     unique_id=unique_id,
     plot_ft_importance=True,
+    n_splits=8,
 )
 # %% Train Model
 
 train = feature_engineering(train)
+X_val = feature_engineering(X_val)
 
 model = get_model(model_name)
 model.fit(train[features], train[target_name])
 
 _ = evaluate_model(
-    model=model, X=X_val[features], y=y_val[target_name], verbose=True, log=True
+    model=model, X=X_val[features], y=y_val[target_name], verbose=True, log=False
 )
 # %% Predicion
 
@@ -65,12 +87,9 @@ X_train = pd.read_csv("data/X_train.csv")
 y_train = pd.read_csv("data/y_train.csv")
 X_test = pd.read_csv("data/X_test.csv")
 
-mean_allocation_return = (
-    X_train.merge(y_train, on="ROW_ID").groupby("ALLOCATION")["target"].mean().to_dict()
-)
 
-X_train = feature_engineering(X_train, mean_allocation_return)
-X_test = feature_engineering(X_test, mean_allocation_return)
+X_train = feature_engineering(X_train)
+X_test = feature_engineering(X_test)
 
 
 model = get_model(model_name)
