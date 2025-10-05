@@ -22,6 +22,7 @@ def nn_model_selection_using_kfold(
     dropout_rate: float = 0.2,
     unique_id: str = "ROW_ID",
     n_splits: int = 4,
+    feat_engineering=None,
     num_epochs: int = 10,
     batch_size: int = 128,
     lr: float = 1e-3,
@@ -49,6 +50,10 @@ def nn_model_selection_using_kfold(
 
         data_local_train = data.loc[train_mask].copy()
         data_local_test = data.loc[test_mask].copy()
+
+        if feat_engineering:
+            X_train_np = feat_engineering(data_local_train)
+            X_val_np = feat_engineering(data_local_test)
 
         X_train_np = data_local_train[features].values
         X_val_np = data_local_test[features].values
