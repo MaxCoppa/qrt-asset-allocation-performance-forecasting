@@ -72,14 +72,14 @@ model_params = {
         "metric": "mse",
     },
     "xgb_opt": {
-        "learning_rate": 0.24456654951238427,
+        "learning_rate": 0.2553671687393621,
         "max_depth": 12,
-        "min_child_weight": 5.511139920200313,
-        "subsample": 0.5597411818910885,
-        "colsample_bytree": 0.9017647564387504,
-        "gamma": 4.281471053787899,
-        "reg_alpha": 3.190747486473631e-08,
-        "reg_lambda": 0.4581974379691936,
+        "min_child_weight": 5.539596769759182,
+        "subsample": 0.5533027565817632,
+        "colsample_bytree": 0.6958073921678826,
+        "gamma": 2.7772619502519524,
+        "reg_alpha": 0.0006987666658294355,
+        "reg_lambda": 0.029502980270596287,
     },
 }
 
