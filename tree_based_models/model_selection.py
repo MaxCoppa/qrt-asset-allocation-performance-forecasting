@@ -66,7 +66,6 @@ def model_selection_using_kfold(
         # Select the actual values for this fold
         train_vals = unique_vals[train_idx]
         test_vals = unique_vals[test_idx]
-
         # Build masks by checking membership in the unique_id column
         train_mask = data[unique_id].isin(train_vals)
         test_mask = data[unique_id].isin(test_vals)

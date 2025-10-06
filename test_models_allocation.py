@@ -1,6 +1,8 @@
 # %%
 import pandas as pd
+import numpy as np
 from tree_based_models import model_selection_by_allocation, get_model, evaluate_model
+from tqdm import tqdm
 
 # %% Load Data
 
@@ -13,6 +15,7 @@ y_val = pd.read_csv("data/y_val.csv")
 features = [
     col for col in train.columns if col not in ["ROW_ID", "TS", "ALLOCATION", "target"]
 ]
+features = [f"RET_{i}" for i in range(1, 21)]
 target_name = "target"
 unique_id = "TS"
 model_name = "xgb"

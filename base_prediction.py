@@ -16,8 +16,8 @@ features = [
 ]
 
 target_name = "target"
-unique_id = "TS"
-model_name = "xgb"
+unique_id = "ROW_ID"
+model_name = "xgb_opt"
 
 # %% Model Selection Evaluation
 

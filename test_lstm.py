@@ -29,7 +29,7 @@ X_ret1_tensor = torch.tensor(X_ret1, dtype=torch.float32)
 y_tensor = torch.tensor(y, dtype=torch.float32)
 
 dataset = TensorDataset(X_seq_tensor, X_turnover_tensor, X_ret1_tensor, y_tensor)
-train_loader = DataLoader(dataset, batch_size=64, shuffle=True)
+train_loader = DataLoader(dataset, batch_size=65, shuffle=False)
 
 
 # %%

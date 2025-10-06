@@ -59,6 +59,28 @@ model_params = {
         "random_seed": 42,
         "verbose": 0,
     },
+    "lgbm_opt": {
+        "learning_rate": 0.047090685234810956,
+        "num_leaves": 209,
+        "max_depth": 4,
+        "min_child_samples": 28,
+        "subsample": 0.7349165219161458,
+        "colsample_bytree": 0.6563592672166201,
+        "lambda_l1": 2.0966568965626345e-06,
+        "lambda_l2": 7.814815853457007,
+        "verbose": -1,
+        "metric": "mse",
+    },
+    "xgb_opt": {
+        "learning_rate": 0.24456654951238427,
+        "max_depth": 12,
+        "min_child_weight": 5.511139920200313,
+        "subsample": 0.5597411818910885,
+        "colsample_bytree": 0.9017647564387504,
+        "gamma": 4.281471053787899,
+        "reg_alpha": 3.190747486473631e-08,
+        "reg_lambda": 0.4581974379691936,
+    },
 }
 
 
@@ -86,8 +108,12 @@ def get_model(model_type: str):
         return RandomForestRegressor(**model_params["rf"])
     elif model_type == "xgb":
         return XGBRegressor(**model_params["xgb"])
+    elif model_type == "xgb_opt":
+        return XGBRegressor(**model_params["xgb"])
     elif model_type == "lgbm":
         return LGBMRegressor(**model_params["lgbm"])
+    elif model_type == "lgbm_opt":
+        return LGBMRegressor(**model_params["lgbm_opt"])
     elif model_type == "cat":
         return CatBoostRegressor(**model_params["cat"])
     else:

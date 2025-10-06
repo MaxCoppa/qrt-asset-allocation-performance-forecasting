@@ -8,6 +8,8 @@ from feature_engineering import (
     add_average_volume_features,
     add_near_time_comparison_features,
     add_ratio_difference_features,
+    create_mean_allocation,
+    add_strategy_features,
 )
 
 
@@ -22,25 +24,13 @@ RET_features = [f"RET_{i}" for i in range(1, 20)]
 SIGNED_VOLUME_features = [f"SIGNED_VOLUME_{i}" for i in range(1, 20)]
 TURNOVER_features = ["AVG_DAILY_TURNOVER"]
 
-window_sizes = [3, 5, 10, 15, 20]
-pairs = [(1, 2), (1, 3), (1, 5), (2, 3), (2, 10)]
+window_sizes = [i for i in range(3, 20)]
 
-features = RET_features + TURNOVER_features
+features = RET_features + TURNOVER_features + SIGNED_VOLUME_features
 
 features = features + [f"AVERAGE_PERF_{i}" for i in window_sizes]
 features = features + [f"ALLOCATIONS_AVERAGE_PERF_{i}" for i in window_sizes]
-# features = features + [f"AVERAGE_SIGNED_VOLUME_{i}" for i in window_sizes]
-# features = features + [f"ALLOCATIONS_AVERAGE_SIGNED_VOLUME_{i}" for i in window_sizes]
-features = features + [
-    "SIGNED_VOLUME_1_MINUS_SIGNED_VOLUME_2_RATIO",
-    "SIGNED_VOLUME_1_MINUS_SIGNED_VOLUME_3_RATIO",
-    "SIGNED_VOLUME_1_MINUS_SIGNED_VOLUME_5_RATIO",
-    "SIGNED_VOLUME_2_MINUS_SIGNED_VOLUME_3_RATIO",
-    "SIGNED_VOLUME_2_MINUS_SIGNED_VOLUME_10_RATIO",
-]
-
-
-# features = features + ["RET_diff_1_2","RET_ratio_1_2","VOL_diff_1_2","VOL_ratio_1_2","IMPACT_diff_1_2","IMPACT_ratio_1_2"]
+# features = features + ["is_long_short_term", "is_long_middle_term", "is_long_long_term"]
 # features = features + ["AVG_DAILY_TURNOVER_ALLOCATION"]
 # %% Feature Engineering
 
@@ -53,11 +43,9 @@ def feature_engineering(
         RET_features=RET_features,
         window_sizes=window_sizes,
         group_col="TS",
-    ).pipe(
-        add_ratio_difference_features,
-        features=SIGNED_VOLUME_features,
-        index_pairs=pairs,
     )
+    # .pipe(add_strategy_features, SIGNED_VOLUME_features=SIGNED_VOLUME_features)
+
     return X
 
 
@@ -65,7 +53,7 @@ def feature_engineering(
 
 target_name = "target"
 unique_id = "TS"
-model_name = "xgb"
+model_name = "lgbm_opt"
 # %% Model Selection Evaluation
 
 model_selection_using_kfold(
