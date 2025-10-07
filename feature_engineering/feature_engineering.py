@@ -35,6 +35,8 @@ def add_average_volume_features(
         alloc_col = f"ALLOCATIONS_AVERAGE_VOLUME_{i}"
         X[avg_col] = X[SIGNED_VOLUME_features[:i]].mean(axis=1)
         X[alloc_col] = X.groupby(group_col)[avg_col].transform("mean")
+        X = X.drop(columns=avg_col)
+
     return X
 
 
@@ -128,4 +130,20 @@ def add_cross_sectional_features(
     for col in base_cols:
         X[f"{col}_RANK"] = X.groupby(group_col)[col].rank(pct=True)
         X[f"{col}_SPREAD"] = X[col] - X.groupby(group_col)[col].transform("mean")
+    return X
+
+
+def scale_perf_features(
+    X: pd.DataFrame,
+    RET_features: list,
+):
+    """
+    Moving averages of returns + within-group (day) averages.
+    """
+
+    X = X.copy()
+    for col in RET_features:
+        X[col] = np.sigmoid(X[col]) * np.log(np.abs(X[col]) * 1e4 + 1)
+    if "target" in X.columns:
+        X["target"] = np.sign(X["target"]) * np.log(np.abs(X[col]) * 1e4 + 1)
     return X

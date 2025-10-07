@@ -71,9 +71,9 @@ def kfold_general_with_residuals(
         for alloc, group in train_df.groupby("ALLOCATION"):
             res_model = residual_model_cls(**residual_params)
             res_model.fit(
-                group.drop(
-                    columns=["ROW_ID", "TS", "target", "residuals", "ALLOCATION"]
-                ),
+                group[
+                    features + ["ROW_ID", "TS", "target", "residuals", "ALLOCATION"]
+                ].drop(columns=["ROW_ID", "TS", "target", "residuals", "ALLOCATION"]),
                 group["residuals"],
             )
             residual_models[alloc] = res_model

@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.linear_model import Ridge
 from sklearn.metrics import accuracy_score
 from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
 from tree_based_models import kfold_general_with_residuals
 from feature_engineering import (
     encode_allocation,
@@ -16,6 +17,7 @@ from feature_engineering import (
     add_strategy_features,
     add_cross_sectional_features,
     add_statistical_features,
+    scale_perf_features,
 )
 
 
@@ -45,22 +47,36 @@ def feature_engineering(
             window_sizes=window_sizes,
             group_col="TS",
         )
-        # .pipe(add_statistical_features,
-        #     RET_features=RET_features,
-        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features)
+        .pipe(
+            add_statistical_features,
+            RET_features=RET_features,
+            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        )
+        .pipe(
+            add_average_volume_features,
+            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+            window_sizes=[3, 5, 10],
+        )
+        # .pipe(add_cross_sectional_features, base_cols=["RET_1", "RET_3"])
     )
 
     return X
 
 
 X_feat = feature_engineering(train)
-# Load data
-train = pd.read_csv("data/train.csv")
-X_val = pd.read_csv("data/X_val.csv")
-y_val = pd.read_csv("data/y_val.csv")
+
 
 # %%
 features = [col for col in X_feat.columns if col not in ["ROW_ID", "TS", "target"]]
+
+features = [
+    col
+    for col in X_feat.columns
+    if col not in ["ROW_ID", "TS", "target"] + SIGNED_VOLUME_features
+]
+
+
+# %%
 target_name = "target"
 ridge_params = {
     "alpha": 1.0,
@@ -69,13 +85,19 @@ ridge_params = {
 }
 
 xgb_params = {
-    "n_estimators": 10,
+    "n_estimators": 20,
     "max_depth": 5,
-    "learning_rate": 0.05,
+    "learning_rate": 0.01,
     "subsample": 0.8,
     "colsample_bytree": 0.8,
     "random_state": 42,
 }
+
+
+general_model_cls = Ridge
+general_params = ridge_params
+residual_model_cls = XGBRegressor
+residual_params = xgb_params
 # %%
 metrics = kfold_general_with_residuals(
     data=train,
@@ -84,10 +106,10 @@ metrics = kfold_general_with_residuals(
     unique_id="TS",
     feat_engineering=feature_engineering,
     n_splits=5,
-    general_model_cls=Ridge,
-    general_params=ridge_params,
-    residual_model_cls=XGBRegressor,
-    residual_params=xgb_params,
+    general_model_cls=general_model_cls,
+    general_params=general_params,
+    residual_model_cls=residual_model_cls,
+    residual_params=residual_params,
 )
 
 # %%
@@ -103,7 +125,7 @@ y_train = train[target_name]
 
 # %%
 # General Ridge model
-general_model = Ridge(**ridge_params)
+general_model = general_model_cls(**general_params)
 general_model.fit(X_train.drop(columns=["ALLOCATION"]), y_train)
 
 # Compute residuals
@@ -115,9 +137,9 @@ train["residuals"] = y_train - general_model.predict(
 # Train residual Ridge models per ALLOCATION
 residual_models = {}
 for alloc, df_group in train.groupby("ALLOCATION"):
-    model = XGBRegressor(**xgb_params)
+    model = residual_model_cls(**residual_params)
     model.fit(
-        df_group.drop(columns=["ROW_ID", "TS", "target", "residuals", "ALLOCATION"]),
+        df_group[features].drop(columns=["ALLOCATION"]),
         df_group["residuals"],
     )
     residual_models[alloc] = model
@@ -147,8 +169,8 @@ y_true_bin = (y_val[target_name] > 0).astype(int)
 y_pred_general_bin = (y_pred_general > 0).astype(int)
 y_pred_combined_bin = (y_pred_combined > 0).astype(int)
 
-print("General Ridge accuracy:", accuracy_score(y_true_bin, y_pred_general_bin))
-print("Combined Ridge accuracy:", accuracy_score(y_true_bin, y_pred_combined_bin))
+print("General Model accuracy:", accuracy_score(y_true_bin, y_pred_general_bin))
+print("Combined Model accuracy:", accuracy_score(y_true_bin, y_pred_combined_bin))
 
 
 # %%
@@ -162,6 +184,4 @@ if feature_engineering:
 preds_sub = combined_predict(X_test[features])
 preds_sub = pd.DataFrame(preds_sub, index=X_test["ROW_ID"], columns=[target_name])
 (preds_sub > 0).astype(int).to_csv(f"predictions/preds_res_model.csv")
-# %%
-preds_sub
 # %%

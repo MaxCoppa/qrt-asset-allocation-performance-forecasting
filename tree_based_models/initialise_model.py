@@ -10,6 +10,14 @@ from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 from catboost import CatBoostRegressor
+import numpy as np
+
+
+def weighted_mse(y_true, y_pred):
+    weight = 1.0 / (np.abs(y_true) + 1e-6)
+    grad = -2 * (y_true - y_pred) * weight
+    hess = 2 * weight
+    return grad, hess
 
 
 # Default hyperparameters for supported models
@@ -35,21 +43,13 @@ model_params = {
         "random_state": 42,
     },
     "xgb": {
-        "n_estimators": 10,  # number of boosting rounds
-        "learning_rate": 0.1,  # shrinkage
-        "max_depth": 5,  # tree depth
-        "subsample": 0.8,  # row sampling
-        "colsample_bytree": 0.8,  # feature sampling
+        "n_estimators": 50,
+        "max_depth": 5,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
         "random_state": 42,
     },
-    # {
-    #     "n_estimators": 100,
-    #     "max_depth": 5,
-    #     "learning_rate": 0.05,
-    #     "subsample": 0.8,
-    #     "colsample_bytree": 0.8,
-    #     "random_state": 42,
-    # },
     "lgbm": {
         "n_estimators": 100,
         "max_depth": -1,
@@ -59,7 +59,6 @@ model_params = {
         "random_state": 42,
         "verbose": -1,
         "metric": "mse",
-        "scale_pos_weight": 1 / 2,
     },
     "cat": {
         "iterations": 100,
@@ -90,6 +89,15 @@ model_params = {
         "reg_alpha": 0.0006987666658294355,
         "reg_lambda": 0.029502980270596287,
     },
+    "xgb_objective": {
+        "n_estimators": 300,
+        "max_depth": 5,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "random_state": 42,
+        "objective": weighted_mse,
+    },
 }
 
 
@@ -118,7 +126,9 @@ def get_model(model_type: str):
     elif model_type == "xgb":
         return XGBRegressor(**model_params["xgb"])
     elif model_type == "xgb_opt":
-        return XGBRegressor(**model_params["xgb"])
+        return XGBRegressor(**model_params["xgb_opt"])
+    elif model_type == "xgb_objective":
+        return XGBRegressor(**model_params["xgb_objective"])
     elif model_type == "lgbm":
         return LGBMRegressor(**model_params["lgbm"])
     elif model_type == "lgbm_opt":
