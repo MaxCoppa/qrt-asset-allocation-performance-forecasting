@@ -42,17 +42,16 @@ def feature_engineering(
             RET_features=RET_features,
             window_sizes=window_sizes,
             group_col="TS",
-        )
-        .pipe(
+        ).pipe(
             add_statistical_features,
             RET_features=RET_features,
             SIGNED_VOLUME_features=SIGNED_VOLUME_features,
         )
-        .pipe(
-            add_average_volume_features, SIGNED_VOLUME_features=SIGNED_VOLUME_features
-        )
+        # .pipe(
+        #     add_average_volume_features, SIGNED_VOLUME_features=SIGNED_VOLUME_features
+        # )
         # .pipe(create_mean_allocation,dict_mean=dict_mean)
-        .pipe(add_cross_sectional_features, base_cols=["RET_1", "RET_3"])
+        # .pipe(add_cross_sectional_features, base_cols=["RET_1", "RET_3"])
     )
 
     return X
@@ -68,7 +67,7 @@ features = [
 
 target_name = "target"
 unique_id = "TS"
-model_name = "xgb_opt"
+model_name = "ridge"
 # %% Model Selection Evaluation
 
 model_selection_using_kfold(
@@ -78,7 +77,7 @@ model_selection_using_kfold(
     feat_engineering=feature_engineering,
     model_type=model_name,
     unique_id=unique_id,
-    plot_ft_importance=True,
+    plot_ft_importance=False,
     n_splits=5,
 )
 # %% Train Model
@@ -111,7 +110,4 @@ preds_sub = pd.DataFrame(preds_sub, index=X_test["ROW_ID"], columns=[target_name
 preds_sub["target"] = 1
 (preds_sub > 0).astype(int).to_csv(f"predictions/preds_{model_name}.csv")
 # %%
-preds_sub["target"] = 1
-(preds_sub > 0).astype(int).to_csv(f"predictions/dummy_pred.csv")
-
 # %%

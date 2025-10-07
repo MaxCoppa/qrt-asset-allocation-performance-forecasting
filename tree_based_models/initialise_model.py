@@ -19,7 +19,7 @@ model_params = {
         "fit_intercept": True,
     },
     "ridge": {
-        "alpha": 1e-2,
+        "alpha": 1.0,
         "fit_intercept": True,
         "random_state": 42,
     },
@@ -35,13 +35,21 @@ model_params = {
         "random_state": 42,
     },
     "xgb": {
-        "n_estimators": 100,
-        "max_depth": 5,
-        "learning_rate": 0.05,
-        "subsample": 0.8,
-        "colsample_bytree": 0.8,
+        "n_estimators": 10,  # number of boosting rounds
+        "learning_rate": 0.1,  # shrinkage
+        "max_depth": 5,  # tree depth
+        "subsample": 0.8,  # row sampling
+        "colsample_bytree": 0.8,  # feature sampling
         "random_state": 42,
     },
+    # {
+    #     "n_estimators": 100,
+    #     "max_depth": 5,
+    #     "learning_rate": 0.05,
+    #     "subsample": 0.8,
+    #     "colsample_bytree": 0.8,
+    #     "random_state": 42,
+    # },
     "lgbm": {
         "n_estimators": 100,
         "max_depth": -1,
@@ -51,6 +59,7 @@ model_params = {
         "random_state": 42,
         "verbose": -1,
         "metric": "mse",
+        "scale_pos_weight": 1 / 2,
     },
     "cat": {
         "iterations": 100,

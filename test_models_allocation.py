@@ -18,7 +18,7 @@ features = [
 features = [f"RET_{i}" for i in range(1, 21)]
 target_name = "target"
 unique_id = "TS"
-model_name = "xgb"
+model_name = "ridge"
 
 # %% Model Selection Evaluation
 
