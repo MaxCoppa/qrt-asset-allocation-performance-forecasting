@@ -11,6 +11,23 @@ from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 from catboost import CatBoostRegressor
 import numpy as np
+from sklearn.ensemble import VotingRegressor
+
+
+class EnsembleRegressor:
+    def __init__(self, models, weights=None):
+        self.models = models
+        self.weights = weights if weights is not None else [1] * len(models)
+
+    def fit(self, X, y):
+        for model in self.models:
+            model.fit(X, y)
+        return self
+
+    def predict(self, X):
+        preds = np.column_stack([model.predict(X) for model in self.models])
+        weights = np.array(self.weights) / np.sum(self.weights)
+        return np.dot(preds, weights)
 
 
 def weighted_mse(y_true, y_pred):
@@ -43,7 +60,7 @@ model_params = {
         "random_state": 42,
     },
     "xgb": {
-        "n_estimators": 50,
+        "n_estimators": 100,
         "max_depth": 5,
         "learning_rate": 0.05,
         "subsample": 0.8,
@@ -58,7 +75,16 @@ model_params = {
         "colsample_bytree": 0.8,
         "random_state": 42,
         "verbose": -1,
-        "metric": "mse",
+    },
+    "lgbm_chat": {
+        "learning_rate": 0.05,
+        "n_estimators": 2000,  # high cap; rely on early stopping
+        "num_leaves": 64,
+        "min_data_in_leaf": 100,
+        "feature_fraction": 0.8,
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "verbose": -1,
     },
     "cat": {
         "iterations": 100,
@@ -133,8 +159,17 @@ def get_model(model_type: str):
         return LGBMRegressor(**model_params["lgbm"])
     elif model_type == "lgbm_opt":
         return LGBMRegressor(**model_params["lgbm_opt"])
+    elif model_type == "lgbm_chat":
+        return LGBMRegressor(**model_params["lgbm_chat"])
     elif model_type == "cat":
         return CatBoostRegressor(**model_params["cat"])
+    elif model_type == "voting":
+        return EnsembleRegressor(
+            models=[
+                LGBMRegressor(**model_params["lgbm"]),
+                XGBRegressor(**model_params["xgb"]),
+            ]
+        )
     else:
         raise ValueError(
             "Invalid model_type. Choose from 'linear', 'ridge', 'lasso', 'rf', 'xgb', 'lgbm', 'cat'."

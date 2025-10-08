@@ -13,6 +13,7 @@ from feature_engineering import (
     add_cross_sectional_features,
     add_statistical_features,
     scale_perf_features,
+    add_mulitiply_col,
 )
 
 
@@ -39,6 +40,11 @@ def feature_engineering(
 ) -> pd.DataFrame:
     X = (
         X.pipe(
+            add_mulitiply_col,
+            RET_features=RET_features,
+            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        )
+        .pipe(
             add_average_perf_features,
             RET_features=RET_features,
             window_sizes=window_sizes,
@@ -62,14 +68,13 @@ X_feat = feature_engineering(train)
 features = [
     col
     for col in X_feat.columns
-    if col not in ["ROW_ID", "TS", "ALLOCATION", "target"] + SIGNED_VOLUME_features
+    if col not in ["ROW_ID", "TS", "ALLOCATION", "target"]  # + SIGNED_VOLUME_features
 ]
-# features = ["RET_1","SIGNED_VOLUME_1", "AVG_DAILY_TURNOVER","ALLOCATIONS_AVERAGE_PERF_1","AVERAGE_PERF_5","AVERAGE_PERF_10"]
 
 # %%
 target_name = "target"
 unique_id = "TS"
-model_name = "xgb"
+model_name = "ridge"
 # %% Model Selection Evaluation
 
 model_selection_using_kfold(
@@ -80,7 +85,7 @@ model_selection_using_kfold(
     model_type=model_name,
     unique_id=unique_id,
     plot_ft_importance=True,
-    n_splits=5,
+    n_splits=4,
 )
 # %% Train Model
 

@@ -10,6 +10,7 @@ def kfold_general_with_residuals(
     data: pd.DataFrame,
     target: str,
     features: list[str],
+    features_res: list[str],
     unique_id: str = "ROW_ID",
     feat_engineering=None,
     n_splits: int = 5,
@@ -31,6 +32,10 @@ def kfold_general_with_residuals(
         "colsample_bytree": 0.8,
         "random_state": 42,
     }
+
+    missing = [f for f in features_res if f not in features]
+    if missing:
+        raise ValueError(f"Invalid features found: {missing}")
 
     unique_vals = data[unique_id].unique()
 
@@ -71,9 +76,7 @@ def kfold_general_with_residuals(
         for alloc, group in train_df.groupby("ALLOCATION"):
             res_model = residual_model_cls(**residual_params)
             res_model.fit(
-                group[
-                    features + ["ROW_ID", "TS", "target", "residuals", "ALLOCATION"]
-                ].drop(columns=["ROW_ID", "TS", "target", "residuals", "ALLOCATION"]),
+                group[features_res].drop(columns=["ALLOCATION"]),
                 group["residuals"],
             )
             residual_models[alloc] = res_model
@@ -85,7 +88,7 @@ def kfold_general_with_residuals(
         for alloc, model in residual_models.items():
             mask = X_test["ALLOCATION"] == alloc
             if mask.any():
-                X_group = X_test.loc[mask].drop(columns=["ALLOCATION"])
+                X_group = X_test[features_res].loc[mask].drop(columns=["ALLOCATION"])
                 corrections[mask] = model.predict(X_group)
 
         y_pred = base_pred + corrections

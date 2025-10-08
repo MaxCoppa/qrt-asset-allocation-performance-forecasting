@@ -147,3 +147,19 @@ def scale_perf_features(
     if "target" in X.columns:
         X["target"] = np.sign(X["target"]) * np.log(np.abs(X[col]) * 1e4 + 1)
     return X
+
+
+def add_mulitiply_col(
+    X: pd.DataFrame,
+    RET_features: list,
+    SIGNED_VOLUME_features: list,
+):
+    X = X.copy()
+    n = len(RET_features)
+    for i in range(n):
+        col_name = RET_features[i] + "_" + SIGNED_VOLUME_features[i]
+        avg_col_name = "AVERAGE_" + col_name
+        X[col_name] = X[RET_features[i]] * X[SIGNED_VOLUME_features[i]]
+        X[avg_col_name] = X.groupby("TS")[col_name].transform("mean")
+
+    return X

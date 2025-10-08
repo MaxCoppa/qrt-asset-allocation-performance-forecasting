@@ -35,7 +35,7 @@ def model_selection_by_allocation(
         y_train = train_sub[target].copy()
         unique_ids = train_sub[unique_id].unique()
 
-        n_splits = 8
+        n_splits = 2
         metrics = {"accuracy": []}
         models = []
 

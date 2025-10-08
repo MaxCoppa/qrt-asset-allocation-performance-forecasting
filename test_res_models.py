@@ -18,6 +18,7 @@ from feature_engineering import (
     add_cross_sectional_features,
     add_statistical_features,
     scale_perf_features,
+    add_mulitiply_col,
 )
 
 
@@ -42,6 +43,11 @@ def feature_engineering(
 ) -> pd.DataFrame:
     X = (
         X.pipe(
+            add_mulitiply_col,
+            RET_features=RET_features,
+            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        )
+        .pipe(
             add_average_perf_features,
             RET_features=RET_features,
             window_sizes=window_sizes,
@@ -75,6 +81,7 @@ features = [
     if col not in ["ROW_ID", "TS", "target"] + SIGNED_VOLUME_features
 ]
 
+features_res = features
 
 # %%
 target_name = "target"
@@ -85,7 +92,16 @@ ridge_params = {
 }
 
 xgb_params = {
-    "n_estimators": 20,
+    "n_estimators": 50,
+    "max_depth": 5,
+    "learning_rate": 0.01,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "random_state": 42,
+}
+
+xgb_params_init = {
+    "n_estimators": 300,
     "max_depth": 5,
     "learning_rate": 0.01,
     "subsample": 0.8,
@@ -103,6 +119,7 @@ metrics = kfold_general_with_residuals(
     data=train,
     target=target_name,
     features=features,
+    features_res=features,
     unique_id="TS",
     feat_engineering=feature_engineering,
     n_splits=5,
@@ -139,7 +156,7 @@ residual_models = {}
 for alloc, df_group in train.groupby("ALLOCATION"):
     model = residual_model_cls(**residual_params)
     model.fit(
-        df_group[features].drop(columns=["ALLOCATION"]),
+        df_group[features_res].drop(columns=["ALLOCATION"]),
         df_group["residuals"],
     )
     residual_models[alloc] = model
@@ -153,7 +170,7 @@ def combined_predict(df):
     for alloc, model in residual_models.items():
         mask = df["ALLOCATION"] == alloc
         if mask.any():
-            X_group = df.loc[mask].drop(columns=["ALLOCATION"])
+            X_group = df[features_res].loc[mask].drop(columns=["ALLOCATION"])
             corrections[mask] = model.predict(X_group)
     return base_pred + corrections
 
@@ -172,7 +189,6 @@ y_pred_combined_bin = (y_pred_combined > 0).astype(int)
 print("General Model accuracy:", accuracy_score(y_true_bin, y_pred_general_bin))
 print("Combined Model accuracy:", accuracy_score(y_true_bin, y_pred_combined_bin))
 
-
 # %%
 X_test = pd.read_csv("data/X_test.csv")
 X_test = X_test.fillna(0)
@@ -183,5 +199,5 @@ if feature_engineering:
 
 preds_sub = combined_predict(X_test[features])
 preds_sub = pd.DataFrame(preds_sub, index=X_test["ROW_ID"], columns=[target_name])
-(preds_sub > 0).astype(int).to_csv(f"predictions/preds_res_model.csv")
+# (preds_sub > 0).astype(int).to_csv(f"predictions/preds_res_model_v3.csv")
 # %%

@@ -14,23 +14,16 @@ class GaussianNoise(nn.Module):
 
 
 class AE_BottleneckMLP(nn.Module):
-    def __init__(self, num_columns, enc_units, dec_units, mlp_units, dropout_rate=0.2):
-        """
-        Args:
-            num_columns (int): number of input features
-            enc_units (list[int]): hidden sizes for encoder (e.g. [512, 256])
-            dec_units (list[int]): hidden sizes for decoder (mirror of enc_units)
-            mlp_units (list[int]): hidden sizes for supervised head (e.g. [128, 64])
-            dropout_rate (float): dropout probability
-        """
+    def __init__(
+        self, num_columns, enc_units, dec_units, mlp_units, recon_dim, dropout_rate=0.2
+    ):
         super().__init__()
+        self.recon_dim = recon_dim
 
         # --- Input Normalization ---
         self.input_bn = nn.BatchNorm1d(num_columns)
 
         # --- Encoder ---
-        enc_layers = []
-        in_dim = num_columns
         enc_layers = [GaussianNoise(0.1)]
         in_dim = num_columns
         for u in enc_units:
@@ -43,7 +36,7 @@ class AE_BottleneckMLP(nn.Module):
             in_dim = u
         self.encoder = nn.Sequential(*enc_layers)
 
-        # --- Decoder ---
+        # --- Decoder (reconstruction only target vector) ---
         dec_layers = []
         in_dim = enc_units[-1]
         for u in dec_units:
@@ -54,11 +47,11 @@ class AE_BottleneckMLP(nn.Module):
                 nn.Dropout(dropout_rate),
             ]
             in_dim = u
-        # final reconstruction to original dimension
-        dec_layers += [nn.Linear(in_dim, num_columns)]
+        # final output = recon_dim
+        dec_layers += [nn.Linear(in_dim, recon_dim)]
         self.decoder = nn.Sequential(*dec_layers)
 
-        # --- Supervised MLP head (from bottleneck z) ---
+        # --- Supervised MLP head ---
         mlp_layers = []
         in_dim = enc_units[-1]
         for u in mlp_units:
@@ -69,12 +62,12 @@ class AE_BottleneckMLP(nn.Module):
                 nn.Dropout(dropout_rate),
             ]
             in_dim = u
-        mlp_layers += [nn.Linear(in_dim, 1)]  # output
+        mlp_layers += [nn.Linear(in_dim, 1)]
         self.mlp = nn.Sequential(*mlp_layers)
 
     def forward(self, x):
-        x = self.input_bn(x)  # normalize input
-        z = self.encoder(x)  # bottleneck representation
-        x_recon = self.decoder(z)  # reconstruction
-        y_pred = self.mlp(z)  # supervised output (logit/real)
+        x = self.input_bn(x)
+        z = self.encoder(x)
+        x_recon = self.decoder(z)  # reconstruit uniquement le vecteur cible
+        y_pred = self.mlp(z)
         return x_recon, y_pred

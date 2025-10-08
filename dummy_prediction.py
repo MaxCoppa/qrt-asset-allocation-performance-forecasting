@@ -1,6 +1,7 @@
 # %%
 import pandas as pd
 from sklearn.metrics import accuracy_score
+import numpy as np
 
 # %% Load Data
 
@@ -17,4 +18,19 @@ preds = (
 print(accuracy_score(y_true=(train["target"] > 0).astype(int), y_pred=preds))
 
 
+# %%
+dict_allocation = train.groupby("ALLOCATION")["target"].mean().to_dict()
+preds = ((X_val["ALLOCATION"].map(dict_allocation)) > 0).astype(int)
+print(accuracy_score(y_true=(y_val["target"] > 0).astype(int), y_pred=preds))
+
+
+# %%
+X_test = pd.read_csv("data/X_test.csv")
+preds_sub = np.array(X_test["ALLOCATION"].map(dict_allocation))
+preds_sub = pd.DataFrame(
+    (preds_sub > 0).astype(int), index=X_test["ROW_ID"], columns=["target"]
+)
+
+# %%
+preds_sub.to_csv("predictions/dummy_prediction_v2.csv")
 # %%
