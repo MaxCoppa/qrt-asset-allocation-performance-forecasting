@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qrt_asset_allocation"
+version = "0.1.0"
+
+[tool.setuptools]
+packages = ["feature_engineering", "deep_learning_models","tree_based_models"]

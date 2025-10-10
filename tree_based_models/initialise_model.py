@@ -1,0 +1,239 @@
+import numpy as np
+import pandas as pd
+
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.ensemble import RandomForestRegressor
+
+from xgboost import XGBRegressor, XGBClassifier
+from lightgbm import LGBMRegressor, LGBMClassifier
+from catboost import CatBoostRegressor
+from scipy.stats import mode
+
+
+class EnsembleRegressor:
+    """
+    Simple weighted ensemble regressor.
+    """
+
+    def __init__(self, models, weights=None):
+        self.models = models
+        self.weights = weights if weights is not None else [1] * len(models)
+
+    def fit(self, X, y):
+        for model in self.models:
+            model.fit(X, y)
+        return self
+
+    def predict(self, X):
+        preds = np.column_stack([model.predict(X) for model in self.models])
+        weights = np.array(self.weights) / np.sum(self.weights)
+        return np.dot(preds, weights)
+
+
+class EnsembleClassifier:
+
+    def __init__(self, models, weights=None, voting="soft"):
+
+        self.models = models
+        self.weights = weights if weights is not None else [1] * len(models)
+        self.voting = voting
+
+    def fit(self, X, y):
+        for model in self.models:
+            model.fit(X, y)
+        return self
+
+    def predict(self, X):
+        if self.voting == "soft":
+            # weighted probability averaging
+            probas = np.asarray([model.predict_proba(X) for model in self.models])
+            weights = np.array(self.weights) / np.sum(self.weights)
+            avg_proba = np.tensordot(weights, probas, axes=(0, 0))
+            return np.argmax(avg_proba, axis=1)
+        else:
+            # hard voting
+            predictions = np.column_stack([model.predict(X) for model in self.models])
+            # apply weights by repeating predictions
+            weighted_preds = np.repeat(predictions, self.weights, axis=1)
+            return mode(weighted_preds, axis=1, keepdims=False).mode
+
+    def predict_proba(self, X):
+        if self.voting == "soft":
+            probas = np.asarray([model.predict_proba(X) for model in self.models])
+            weights = np.array(self.weights) / np.sum(self.weights)
+            return np.tensordot(weights, probas, axes=(0, 0))
+        else:
+            raise AttributeError("predict_proba is only available with soft voting.")
+
+
+def weighted_mse(y_true, y_pred):
+    """
+    Weighted MSE objective for XGBoost.
+    Penalizes errors on small-magnitude targets more heavily.
+    """
+    weight = 1.0 / (np.abs(y_true) + 1e-6)
+    grad = -2 * (y_true - y_pred) * weight
+    hess = 2 * weight
+    return grad, hess
+
+
+model_params = {
+    # Simple linear models
+    "linear": {"fit_intercept": True},
+    "ridge": {"alpha": 10.0, "fit_intercept": True, "random_state": 42},
+    "ridge1": {"alpha": 1.0, "fit_intercept": True, "random_state": 42},
+    "ridge2": {"alpha": 100.0, "fit_intercept": True, "random_state": 42},
+    "lasso": {"alpha": 0.1, "fit_intercept": True, "random_state": 42},
+    # Tree-based regressors
+    "rf": {"n_estimators": 10, "max_depth": 5, "random_state": 42},
+    "xgb": {
+        "n_estimators": 100,
+        "max_depth": 5,
+        "learning_rate": 0.001,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "random_state": 42,
+    },
+    "xgb_classif": {
+        "n_estimators": 10,
+        "max_depth": 5,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "random_state": 42,
+    },
+    "xgb_opt": {
+        "learning_rate": 0.2553671687393621,
+        "max_depth": 12,
+        "min_child_weight": 5.54,
+        "subsample": 0.553,
+        "colsample_bytree": 0.696,
+        "gamma": 2.78,
+        "reg_alpha": 0.0007,
+        "reg_lambda": 0.0295,
+    },
+    "xgb_objective": {
+        "n_estimators": 300,
+        "max_depth": 5,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "random_state": 42,
+        "objective": weighted_mse,
+    },
+    "lgbm": {
+        "n_estimators": 50,
+        "max_depth": -1,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "random_state": 42,
+        "verbose": -1,
+    },
+    "lgbm_classif": {
+        "n_estimators": 50,
+        "max_depth": -1,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "random_state": 42,
+        "verbose": -1,
+    },
+    "lgbm_chat": {
+        "learning_rate": 0.05,
+        "n_estimators": 2000,
+        "num_leaves": 64,
+        "min_data_in_leaf": 100,
+        "feature_fraction": 0.8,
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "verbose": -1,
+    },
+    "lgbm_opt": {
+        "learning_rate": 0.0471,
+        "num_leaves": 209,
+        "max_depth": 4,
+        "min_child_samples": 28,
+        "subsample": 0.735,
+        "colsample_bytree": 0.656,
+        "lambda_l1": 2.1e-6,
+        "lambda_l2": 7.81,
+        "verbose": -1,
+        "metric": "mse",
+    },
+    "cat": {
+        "iterations": 100,
+        "depth": 6,
+        "learning_rate": 0.05,
+        "random_seed": 42,
+        "verbose": 0,
+    },
+}
+
+model_registry = {
+    "linear": LinearRegression,
+    "ridge": Ridge,
+    "lasso": Lasso,
+    "rf": RandomForestRegressor,
+    "xgb": XGBRegressor,
+    "xgb_opt": XGBRegressor,
+    "xgb_objective": XGBRegressor,
+    "xgb_classif": XGBClassifier,
+    "lgbm": LGBMRegressor,
+    "lgbm_opt": LGBMRegressor,
+    "lgbm_chat": LGBMRegressor,
+    "lgbm_classif": LGBMClassifier,
+    "cat": CatBoostRegressor,
+}
+
+
+def get_model(model_type: str, custom_params: dict = None):
+    """
+    Returns a regression model with predefined hyperparameters.
+
+    Parameters
+    ----------
+    model_type : str
+        One of available model keys (see `list_available_models`).
+    custom_params : dict, optional
+        Custom parameters to override defaults.
+
+    Returns
+    -------
+    model : Regressor
+        Instantiated regression model.
+    """
+    if model_type == "voting":
+        return EnsembleRegressor(
+            models=[
+                LGBMRegressor(**model_params["lgbm"]),
+                XGBRegressor(**model_params["xgb"]),
+            ]
+        )
+
+    if model_type == "voting_classif":
+        return EnsembleClassifier(
+            models=[
+                LGBMClassifier(**model_params["lgbm_classif"]),
+                XGBClassifier(**model_params["xgb_classif"]),
+            ],
+            weights=[0.2, 0.8],
+        )
+
+    if model_type == "voting_ridge":
+        return EnsembleRegressor(
+            models=[
+                Ridge(**model_params["ridge"]),
+                Ridge(**model_params["ridge1"]),
+                Ridge(**model_params["ridge2"]),
+            ],
+        )
+
+    if model_type not in model_registry or model_type not in model_params:
+        list_models = list(model_registry.keys()) + ["voting"]
+        raise ValueError(
+            f"Invalid model_type '{model_type}'. " f"Choose from {list_models}"
+        )
+
+    params = {**model_params[model_type], **(custom_params or {})}
+    return model_registry[model_type](**params)
