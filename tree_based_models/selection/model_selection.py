@@ -4,8 +4,8 @@ import seaborn as sns
 from sklearn.model_selection import KFold
 from datetime import datetime
 
-from .initialise_model import get_model
-from .evaluate import evaluate_model
+from ..models import get_model
+from ..evaluation import evaluate_model
 
 
 def model_selection_using_kfold(

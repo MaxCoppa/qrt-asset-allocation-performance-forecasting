@@ -5,7 +5,7 @@ from sklearn.linear_model import Ridge
 from sklearn.metrics import accuracy_score
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
-from tree_based_models import kfold_general_with_residuals
+from tree_based_models import kfold_general_with_residuals, ResidualModel
 import feature_engineering as fe
 
 
@@ -62,9 +62,6 @@ def feature_engineering(
 
 
 X_feat = feature_engineering(train)
-
-# %%
-X_feat.columns
 # %%
 features = [col for col in X_feat.columns if col not in ["ROW_ID", "TS", "target"]]
 
@@ -103,10 +100,10 @@ xgb_params_init = {
 }
 
 
-general_model_cls = Ridge
-general_params = ridge_params
-residual_model_cls = Ridge
-residual_params = ridge_params
+general_model_cls = XGBRegressor
+general_params = xgb_params_init
+residual_model_cls = XGBRegressor
+residual_params = xgb_params
 # %%
 metrics = kfold_general_with_residuals(
     data=train,
@@ -122,6 +119,7 @@ metrics = kfold_general_with_residuals(
     residual_params=residual_params,
 )
 
+
 # %%
 # Define features (exclude target + ID + TS but keep ALLOCATION)
 
@@ -131,57 +129,26 @@ if feature_engineering:
 
 X_train = train[features]
 y_train = train[target_name]
-# %%
-X_train.isna().sum().sort_values()
-# %%
-# General Ridge model
-general_model = general_model_cls(**general_params)
-general_model.fit(X_train.drop(columns=["ALLOCATION"]), y_train)
+# %%train = feature_engineering(train)
+X_val = feature_engineering(X_val)
 
-# Compute residuals
-train["residuals"] = y_train - general_model.predict(
-    X_train.drop(columns=["ALLOCATION"])
+res_model = ResidualModel(
+    general_model_cls=general_model_cls,
+    general_params=general_params,
+    residual_model_cls=residual_model_cls,
+    residual_params=residual_params,
 )
-
-# %%
-# Train residual Ridge models per ALLOCATION
-residual_models = {}
-for alloc, df_group in train.groupby("ALLOCATION"):
-    model = residual_model_cls(**residual_params)
-    model.fit(
-        df_group[features_res].drop(columns=["ALLOCATION"]),
-        df_group["residuals"],
-    )
-    residual_models[alloc] = model
-
-
-# %%
-# Combined prediction function (vectorized)
-def combined_predict(df):
-    base_pred = general_model.predict(df.drop(columns=["ALLOCATION"]))
-    corrections = np.zeros(len(df))
-    for alloc, model in residual_models.items():
-        mask = df["ALLOCATION"] == alloc
-        if mask.any():
-            X_group = df[features_res].loc[mask].drop(columns=["ALLOCATION"])
-            corrections[mask] = model.predict(X_group)
-    return base_pred + corrections
-
+res_model.fit(train, target_name, features, features_res)
 
 # %%
 # Predictions
-y_pred_general = general_model.predict(X_val[features].drop(columns=["ALLOCATION"]))
-
-y_pred_combined = combined_predict(X_val[features])
+y_pred_val = res_model.predict(X_val, features, features_res)
 
 # Accuracy on sign (>0)
 y_true_bin = (y_val[target_name] > 0).astype(int)
-y_pred_general_bin = (y_pred_general > 0).astype(int)
-y_pred_combined_bin = (y_pred_combined > 0).astype(int)
+y_pred_bin = (y_pred_val > 0).astype(int)
 
-print("General Model accuracy:", accuracy_score(y_true_bin, y_pred_general_bin))
-print("Combined Model accuracy:", accuracy_score(y_true_bin, y_pred_combined_bin))
-
+print("Residual Model accuracy:", accuracy_score(y_true_bin, y_pred_bin))
 # %%
 X_test = pd.read_csv("data/X_test.csv")
 # X_test = X_test.fillna(0)
@@ -200,10 +167,11 @@ if feature_engineering:
     X_test = feature_engineering(X_test)
 
 
-preds_sub = combined_predict(X_test[features])
+preds_sub = res_model.predict(X_test, features, features_res)
 preds_sub = pd.DataFrame(preds_sub, index=X_test["ROW_ID"], columns=[target_name])
-(preds_sub > 0).astype(int).to_csv(f"predictions/preds_res_model_v6.csv")
-# %%
-(preds_sub > 0).mean()
+# (preds_sub > 0).astype(int).to_csv("predictions/preds_res_model_v6.csv")
+
+# print("Prediction file saved.")
+print("Positive rate:", (preds_sub > 0).mean().values[0])
 
 # %%

@@ -1,9 +1,4 @@
-"""
-Evaluation utilities for single models and ensembles.
-"""
-
 from sklearn.metrics import f1_score, roc_auc_score, accuracy_score
-from .ensemble import predict_ensembler_models
 from datetime import datetime
 
 
