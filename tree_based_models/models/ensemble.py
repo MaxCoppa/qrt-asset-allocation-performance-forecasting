@@ -1,19 +1,58 @@
-"""
-Utility for combining multiple models into an ensemble prediction
-using simple probability averaging.
-"""
-
 import numpy as np
+from scipy.stats import mode
 
 
-def predict_ensembler_models(models, X):
+class EnsembleRegressor:
     """
-    Perform an average ensemble of model predictions.
+    Simple weighted ensemble regressor.
     """
-    # Collect predicted probabilities from each model
-    preds = [m.predict(X) for m in models]
 
-    # Average across models
-    avg_preds = np.mean(preds, axis=0)
+    def __init__(self, models, weights=None):
+        self.models = models
+        self.weights = weights if weights is not None else [1] * len(models)
 
-    return avg_preds
+    def fit(self, X, y):
+        for model in self.models:
+            model.fit(X, y)
+        return self
+
+    def predict(self, X):
+        preds = np.column_stack([model.predict(X) for model in self.models])
+        weights = np.array(self.weights) / np.sum(self.weights)
+        return np.dot(preds, weights)
+
+
+class EnsembleClassifier:
+
+    def __init__(self, models, weights=None, voting="soft"):
+
+        self.models = models
+        self.weights = weights if weights is not None else [1] * len(models)
+        self.voting = voting
+
+    def fit(self, X, y):
+        for model in self.models:
+            model.fit(X, y)
+        return self
+
+    def predict(self, X):
+        if self.voting == "soft":
+            # weighted probability averaging
+            probas = np.asarray([model.predict_proba(X) for model in self.models])
+            weights = np.array(self.weights) / np.sum(self.weights)
+            avg_proba = np.tensordot(weights, probas, axes=(0, 0))
+            return np.argmax(avg_proba, axis=1)
+        else:
+            # hard voting
+            predictions = np.column_stack([model.predict(X) for model in self.models])
+            # apply weights by repeating predictions
+            weighted_preds = np.repeat(predictions, self.weights, axis=1)
+            return mode(weighted_preds, axis=1, keepdims=False).mode
+
+    def predict_proba(self, X):
+        if self.voting == "soft":
+            probas = np.asarray([model.predict_proba(X) for model in self.models])
+            weights = np.array(self.weights) / np.sum(self.weights)
+            return np.tensordot(weights, probas, axes=(0, 0))
+        else:
+            raise AttributeError("predict_proba is only available with soft voting.")

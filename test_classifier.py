@@ -24,26 +24,27 @@ def feature_engineering(
     X: pd.DataFrame,
 ) -> pd.DataFrame:
     X = (
-        X.pipe(
-            fe.add_statistical_features,
-            RET_features=RET_features,
-            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
-        )
-        .pipe(
-            fe.add_mulitiply_col,
-            RET_features=RET_features,
-            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
-        )
+        X
+        # .pipe(
+        #     fe.add_statistical_features,
+        #     RET_features=RET_features,
+        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        # )
+        # .pipe(
+        #     fe.add_mulitiply_col,
+        #     RET_features=RET_features,
+        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        # )
         .pipe(
             fe.add_average_perf_features,
             RET_features=RET_features,
             window_sizes=window_sizes,
             group_col="TS",
         )
-        .pipe(
-            fe.add_average_volume_features,
-            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
-        )
+        # .pipe(
+        #     fe.add_average_volume_features,
+        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        # )
         # .pipe(fe.add_cross_sectional_features, base_cols=["RET_1", "RET_3"])
     )
 

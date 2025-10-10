@@ -19,9 +19,9 @@ X_train.shape, X_val.shape  # = ((162955, 44), (17290, 44))
 train = X_train.merge(y_train, on="ROW_ID")
 
 # %%
-train.to_csv("data/train.csv", index=False)  # Data For Model Selection
-X_val.to_csv("data/X_val.csv", index=False)  # Data For Model Validation
-y_val.to_csv("data/y_val.csv", index=False)  # Data For Model Validation
+train.to_csv("data/train.csv", index=False)
+X_val.to_csv("data/X_val.csv", index=False)
+y_val.to_csv("data/y_val.csv", index=False)
 # %%
 
 

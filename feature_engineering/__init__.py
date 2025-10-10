@@ -12,6 +12,7 @@ __all__ = [
     "add_ratio_difference_features",
     "scale_perf_features",
     "add_mulitiply_col",
+    "add_ret_minus_market",
 ]
 
 from .allocation_encoding import (
@@ -28,6 +29,7 @@ from .feature_engineering import (
     add_cross_sectional_features,
     scale_perf_features,
     add_mulitiply_col,
+    add_ret_minus_market,
 )
 from .split_time import split_data
 

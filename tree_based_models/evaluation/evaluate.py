@@ -28,3 +28,42 @@ def evaluate_model(
             f.write(f"{datetime.now()} - Model evaluation: {msg}{note_str}\n")
 
     return results
+
+
+def evaluate_model_market(
+    model,
+    X,
+    y,
+    y_market,
+    verbose: bool = False,
+    log: bool = False,
+    log_note: str = None,
+) -> dict:
+    """
+    Evaluate a single model on given data.
+    """
+    preds = model.predict(X)
+
+    # Add Market
+    y_adj = y  # ture y
+    preds_adj = preds + y_market  # * std_market no need since we * > 0
+
+    preds = (preds_adj > 0).astype(int)
+    labels = (y_adj > 0).astype(int)
+
+    results = {
+        "accuracy": accuracy_score(labels, preds),
+    }
+
+    msg = " | ".join(f"{k}: {v*100:.2f} %" for k, v in results.items())
+
+    if verbose:
+        print("Model evaluation:", msg)
+
+    if log:
+        logfile = "predictions/evaluation.log"
+        note_str = f" | Note: {log_note}" if log_note else ""
+        with open(logfile, "a") as f:
+            f.write(f"{datetime.now()} - Model evaluation: {msg}{note_str}\n")
+
+    return results

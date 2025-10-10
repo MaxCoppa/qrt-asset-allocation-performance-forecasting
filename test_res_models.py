@@ -29,11 +29,12 @@ def feature_engineering(
     X: pd.DataFrame,
 ) -> pd.DataFrame:
     X = (
-        X.pipe(
-            fe.scale_perf_features,
-            RET_features=RET_features,
-            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
-        )
+        X
+        # .pipe(
+        #     fe.scale_perf_features,
+        #     RET_features=RET_features,
+        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        # )
         # .pipe(
         #     fe.add_mulitiply_col,
         #     RET_features=RET_features,
@@ -45,11 +46,11 @@ def feature_engineering(
             window_sizes=window_sizes,
             group_col="TS",
         )
-        .pipe(
-            fe.add_statistical_features,
-            RET_features=RET_features,
-            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
-        )
+        # .pipe(
+        #     fe.add_statistical_features,
+        #     RET_features=RET_features,
+        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        # )
         .pipe(
             fe.add_average_volume_features,
             SIGNED_VOLUME_features=SIGNED_VOLUME_features,
@@ -63,6 +64,8 @@ def feature_engineering(
 
 X_feat = feature_engineering(train)
 # %%
+
+
 features = [col for col in X_feat.columns if col not in ["ROW_ID", "TS", "target"]]
 
 features = [
@@ -70,19 +73,26 @@ features = [
     for col in X_feat.columns
     if col not in ["ROW_ID", "TS", "target"] + SIGNED_VOLUME_features
 ]
-
 features_res = features
+
 
 # %%
 target_name = "target"
 ridge_params = {
-    "alpha": 1.0,
+    "alpha": 1e-2,
     "fit_intercept": True,
     "random_state": 42,
 }
 
+ridge_params_2 = {
+    "alpha": 1000,
+    "fit_intercept": True,
+    "random_state": 42,
+}
+
+
 xgb_params = {
-    "n_estimators": 10,
+    "n_estimators": 100,
     "max_depth": 5,
     "learning_rate": 0.01,
     "subsample": 0.8,
@@ -100,19 +110,19 @@ xgb_params_init = {
 }
 
 
-general_model_cls = XGBRegressor
-general_params = xgb_params_init
-residual_model_cls = XGBRegressor
-residual_params = xgb_params
+general_model_cls = Ridge
+general_params = ridge_params
+residual_model_cls = Ridge
+residual_params = ridge_params_2
 # %%
 metrics = kfold_general_with_residuals(
     data=train,
     target=target_name,
     features=features,
-    features_res=RET_features + TURNOVER_features + ["ALLOCATION"],
+    features_res=features_res,
     unique_id="TS",
     feat_engineering=feature_engineering,
-    n_splits=5,
+    n_splits=4,
     general_model_cls=general_model_cls,
     general_params=general_params,
     residual_model_cls=residual_model_cls,
@@ -130,7 +140,6 @@ if feature_engineering:
 X_train = train[features]
 y_train = train[target_name]
 # %%train = feature_engineering(train)
-X_val = feature_engineering(X_val)
 
 res_model = ResidualModel(
     general_model_cls=general_model_cls,
@@ -169,7 +178,7 @@ if feature_engineering:
 
 preds_sub = res_model.predict(X_test, features, features_res)
 preds_sub = pd.DataFrame(preds_sub, index=X_test["ROW_ID"], columns=[target_name])
-# (preds_sub > 0).astype(int).to_csv("predictions/preds_res_model_v6.csv")
+(preds_sub > 0).astype(int).to_csv("predictions/preds_res_model_v8.csv")
 
 # print("Prediction file saved.")
 print("Positive rate:", (preds_sub > 0).mean().values[0])

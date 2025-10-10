@@ -15,26 +15,62 @@ def add_average_perf_features(
     for i in window_sizes:
         # rolling mean & std across lagged features
         avg_col = f"AVERAGE_PERF_{i}"
-        std_col = f"STD_PERF_{i}"
 
         X[avg_col] = X[RET_features[:i]].mean(axis=1)
-        X[std_col] = X[RET_features[:i]].std(axis=1)
 
         # group average (cross-sectional info)
         alloc_col = f"ALLOC_AVG_PERF_{i}"
         X[alloc_col] = X.groupby(group_col)[avg_col].transform("mean")
 
-        # spreads
-        last_ret = RET_features[i - 1]  # the "latest" return in that window
-        X[f"SPREAD_{last_ret}"] = (X[last_ret] - X[alloc_col]) / (
-            X[alloc_col].abs() + 1e-6
-        )
-        X[f"SPREAD_LAST_{last_ret}"] = (X[last_ret] - X[avg_col]) / (
-            X[avg_col].abs() + 1e-6
-        )
+        # # spreads
+        # last_ret = RET_features[i - 1]  # the "latest" return in that window
+        # X[f"SPREAD_{last_ret}"] = (X[last_ret] - X[alloc_col]) / (
+        #     X[alloc_col].abs() + 1e-6
+        # )
+        # X[f"SPREAD_LAST_{last_ret}"] = (X[last_ret] - X[avg_col]) / (
+        #     X[avg_col].abs() + 1e-6
+        # )
 
-        # NEW: z-score style feature (last return vs its rolling mean/std)
-        X[f"ZSCORE_{last_ret}"] = (X[last_ret] - X[avg_col]) / (X[std_col] + 1e-6)
+        # # NEW: z-score style feature (last return vs its rolling mean/std)
+        # X[f"ZSCORE_{last_ret}"] = (X[last_ret] - X[avg_col]) / (X[std_col] + 1e-6)
+
+    return X
+
+
+def add_ret_minus_market(
+    X: pd.DataFrame,
+    RET_features: list,
+    rolling_average: int = 1,
+    group_col: str = "TS",
+):
+    n = len(RET_features)
+    X = X.copy()
+    for i in range(n - rolling_average - 1):
+
+        avg_col = f"AVG_PAST_PERF_{i}"
+        X[avg_col] = X[RET_features[i + 1 : i + rolling_average + 1]].mean(axis=1)
+
+        alloc_col = f"ALLOC_AVG_PAST_PERF_{i}"
+        std_col = f"ALLOC_STD_PAST_PERF_{i}"
+        X[alloc_col] = X.groupby(group_col)[avg_col].transform("mean")  # Market
+        X[std_col] = X.groupby(group_col)[avg_col].transform("std")
+
+        # spreads
+        last_ret = RET_features[i]  # the "today" return in that window
+        X[f"SPREAD_{last_ret}"] = (X[last_ret] - X[alloc_col]) / X[std_col]
+
+    if "target" in X.columns:
+        avg_col = f"AVG_PAST_PERF"
+        X[avg_col] = X[RET_features[1 : rolling_average + 1]].mean(axis=1)
+
+        alloc_col = f"ALLOC_AVG_PAST_PERF"
+        std_col = f"ALLOC_STD_PAST_PERF"
+        X[alloc_col] = X.groupby(group_col)[avg_col].transform("mean")  # Market
+        X[std_col] = X.groupby(group_col)[avg_col].transform("std")  # Market
+
+        # spreads
+
+        X[f"SPREAD_target"] = (X["target"] - X[alloc_col]) / X[std_col]
 
     return X
 
@@ -90,8 +126,8 @@ def add_statistical_features(
     X["VOL_KURT"] = X[SIGNED_VOLUME_features].kurtosis(axis=1)
 
     # Within-group spreads
-    for col in ["RET_STD", "VOL_STD"]:
-        X[f"{col}_SPREAD"] = X[col] - X.groupby(group_col)[col].transform("mean")
+    # for col in ["RET_STD", "VOL_STD"]:
+    #     X[f"{col}_SPREAD"] = X[col] - X.groupby(group_col)[col].transform("mean")
 
     return X
 
@@ -177,7 +213,7 @@ def scale_perf_features(
     #  .div(X[SIGNED_VOLUME_features].std(axis=1), axis=0))
 
     for col in SIGNED_VOLUME_features:
-        X["SCALED_" + col] = X[col] / X["AVG_DAILY_TURNOVER"]
+        X["SCALED_" + col] = X[col] * 1e-4
 
     return X
 

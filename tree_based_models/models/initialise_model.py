@@ -7,63 +7,8 @@ from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor, XGBClassifier
 from lightgbm import LGBMRegressor, LGBMClassifier
 from catboost import CatBoostRegressor
-from scipy.stats import mode
-
-
-class EnsembleRegressor:
-    """
-    Simple weighted ensemble regressor.
-    """
-
-    def __init__(self, models, weights=None):
-        self.models = models
-        self.weights = weights if weights is not None else [1] * len(models)
-
-    def fit(self, X, y):
-        for model in self.models:
-            model.fit(X, y)
-        return self
-
-    def predict(self, X):
-        preds = np.column_stack([model.predict(X) for model in self.models])
-        weights = np.array(self.weights) / np.sum(self.weights)
-        return np.dot(preds, weights)
-
-
-class EnsembleClassifier:
-
-    def __init__(self, models, weights=None, voting="soft"):
-
-        self.models = models
-        self.weights = weights if weights is not None else [1] * len(models)
-        self.voting = voting
-
-    def fit(self, X, y):
-        for model in self.models:
-            model.fit(X, y)
-        return self
-
-    def predict(self, X):
-        if self.voting == "soft":
-            # weighted probability averaging
-            probas = np.asarray([model.predict_proba(X) for model in self.models])
-            weights = np.array(self.weights) / np.sum(self.weights)
-            avg_proba = np.tensordot(weights, probas, axes=(0, 0))
-            return np.argmax(avg_proba, axis=1)
-        else:
-            # hard voting
-            predictions = np.column_stack([model.predict(X) for model in self.models])
-            # apply weights by repeating predictions
-            weighted_preds = np.repeat(predictions, self.weights, axis=1)
-            return mode(weighted_preds, axis=1, keepdims=False).mode
-
-    def predict_proba(self, X):
-        if self.voting == "soft":
-            probas = np.asarray([model.predict_proba(X) for model in self.models])
-            weights = np.array(self.weights) / np.sum(self.weights)
-            return np.tensordot(weights, probas, axes=(0, 0))
-        else:
-            raise AttributeError("predict_proba is only available with soft voting.")
+from .ensemble import EnsembleClassifier, EnsembleRegressor
+from sklearn.linear_model import LogisticRegression
 
 
 def weighted_mse(y_true, y_pred):
@@ -83,13 +28,30 @@ model_params = {
     "ridge": {"alpha": 10.0, "fit_intercept": True, "random_state": 42},
     "ridge1": {"alpha": 1.0, "fit_intercept": True, "random_state": 42},
     "ridge2": {"alpha": 100.0, "fit_intercept": True, "random_state": 42},
+    "ridge_benchmark": {"alpha": 1e-2, "fit_intercept": True, "random_state": 42},
     "lasso": {"alpha": 0.1, "fit_intercept": True, "random_state": 42},
+    "logreg_params": {
+        "C": 1 / 1e-2,
+        "fit_intercept": True,
+        "random_state": 42,
+        "penalty": "l2",
+        "solver": "lbfgs",
+        "max_iter": 1000,
+    },
+    "logreg_params_2": {
+        "C": 1 / 1000,
+        "fit_intercept": True,
+        "random_state": 42,
+        "penalty": "l2",
+        "solver": "lbfgs",
+        "max_iter": 1000,
+    },
     # Tree-based regressors
     "rf": {"n_estimators": 10, "max_depth": 5, "random_state": 42},
     "xgb": {
-        "n_estimators": 100,
+        "n_estimators": 50,
         "max_depth": 5,
-        "learning_rate": 0.001,
+        "learning_rate": 0.05,
         "subsample": 0.8,
         "colsample_bytree": 0.8,
         "random_state": 42,
@@ -171,8 +133,13 @@ model_params = {
 }
 
 model_registry = {
+    "logreg_params": LogisticRegression,
+    "logreg_params_2": LogisticRegression,
     "linear": LinearRegression,
     "ridge": Ridge,
+    "ridge1": Ridge,
+    "ridge2": Ridge,
+    "ridge_benchmark": Ridge,
     "lasso": Lasso,
     "rf": RandomForestRegressor,
     "xgb": XGBRegressor,
