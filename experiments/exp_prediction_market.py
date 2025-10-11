@@ -10,9 +10,9 @@ import feature_engineering as fe
 
 # %% Load Data
 
-train = pd.read_csv("data/train.csv")
-X_val = pd.read_csv("data/X_val.csv")
-y_val = pd.read_csv("data/y_val.csv")
+train = pd.read_csv("../data/train.csv")
+X_val = pd.read_csv("../data/X_val.csv")
+y_val = pd.read_csv("../data/y_val.csv")
 
 # %%
 RET_features = [f"RET_{i}" for i in range(1, 21)]
@@ -29,7 +29,7 @@ def feature_engineering(
     X = X.pipe(
         fe.add_ret_minus_market,
         RET_features=RET_features,
-        rolling_average=3,
+        rolling_average=1,
         group_col="TS",
     )
 
@@ -38,19 +38,17 @@ def feature_engineering(
 
 X_feat = feature_engineering(train)
 train = feature_engineering(train)
-
 # %%
 features = (
     [f"SPREAD_RET_{i}" for i in range(1, 14)]
     + TURNOVER_features
     + SIGNED_VOLUME_features
-    + ["RET_1"]
 )
 market_feature = "ALLOC_AVG_PAST_PERF"
 # %%
 target_name = "SPREAD_target"
 unique_id = "TS"
-model_name = "xgb"
+model_name = "xgb_opt"
 # %% Model Selection Evaluation
 
 
@@ -85,9 +83,9 @@ _ = evaluate_model_market(
 )
 # %% Predicion
 
-X_train = pd.read_csv("data/X_train.csv")
-y_train = pd.read_csv("data/y_train.csv")
-X_test = pd.read_csv("data/X_test.csv")
+X_train = pd.read_csv("../data/X_train.csv")
+y_train = pd.read_csv("../data/y_train.csv")
+X_test = pd.read_csv("../data/X_test.csv")
 
 
 X_train = feature_engineering(X_train)

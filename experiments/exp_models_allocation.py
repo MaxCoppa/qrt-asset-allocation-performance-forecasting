@@ -8,9 +8,9 @@ import feature_engineering as fe
 
 # %% Load Data
 
-train = pd.read_csv("data/train.csv")
-X_val = pd.read_csv("data/X_val.csv")
-y_val = pd.read_csv("data/y_val.csv")
+train = pd.read_csv("../data/train.csv")
+X_val = pd.read_csv("../data/X_val.csv")
+y_val = pd.read_csv("../data/y_val.csv")
 
 # %%
 RET_features = [f"RET_{i}" for i in range(1, 21)]

@@ -4,12 +4,11 @@ from scipy.stats import mode
 
 class EnsembleRegressor:
     """
-    Simple weighted ensemble regressor.
+    Simple ensemble regressor (unweighted average).
     """
 
-    def __init__(self, models, weights=None):
+    def __init__(self, models):
         self.models = models
-        self.weights = weights if weights is not None else [1] * len(models)
 
     def fit(self, X, y):
         for model in self.models:
@@ -18,8 +17,7 @@ class EnsembleRegressor:
 
     def predict(self, X):
         preds = np.column_stack([model.predict(X) for model in self.models])
-        weights = np.array(self.weights) / np.sum(self.weights)
-        return np.dot(preds, weights)
+        return preds.mean(axis=1)
 
 
 class EnsembleClassifier:

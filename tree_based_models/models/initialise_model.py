@@ -24,7 +24,7 @@ def weighted_mse(y_true, y_pred):
 
 model_params = {
     # Simple linear models
-    "linear": {"fit_intercept": True},
+    "linear": {"fit_intercept": True, "positive": True},
     "ridge": {"alpha": 10.0, "fit_intercept": True, "random_state": 42},
     "ridge1": {"alpha": 1.0, "fit_intercept": True, "random_state": 42},
     "ridge2": {"alpha": 100.0, "fit_intercept": True, "random_state": 42},
@@ -65,14 +65,8 @@ model_params = {
         "random_state": 42,
     },
     "xgb_opt": {
-        "learning_rate": 0.2553671687393621,
-        "max_depth": 12,
-        "min_child_weight": 5.54,
-        "subsample": 0.553,
-        "colsample_bytree": 0.696,
-        "gamma": 2.78,
-        "reg_alpha": 0.0007,
-        "reg_lambda": 0.0295,
+        "learning_rate": 0.25,
+        "max_depth": 4,
     },
     "xgb_objective": {
         "n_estimators": 300,
@@ -112,14 +106,8 @@ model_params = {
         "verbose": -1,
     },
     "lgbm_opt": {
-        "learning_rate": 0.0471,
-        "num_leaves": 209,
-        "max_depth": 4,
-        "min_child_samples": 28,
-        "subsample": 0.735,
-        "colsample_bytree": 0.656,
-        "lambda_l1": 2.1e-6,
-        "lambda_l2": 7.81,
+        "learning_rate": 0.23,
+        "max_depth": 3,
         "verbose": -1,
         "metric": "mse",
     },

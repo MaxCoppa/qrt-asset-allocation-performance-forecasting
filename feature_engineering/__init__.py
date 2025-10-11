@@ -13,6 +13,7 @@ __all__ = [
     "scale_perf_features",
     "add_mulitiply_col",
     "add_ret_minus_market",
+    "extract_unique_train",
 ]
 
 from .allocation_encoding import (
@@ -34,3 +35,5 @@ from .feature_engineering import (
 from .split_time import split_data
 
 from .volume_features import add_strategy_features
+
+from .deduplicate_train import extract_unique_train

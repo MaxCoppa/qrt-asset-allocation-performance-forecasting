@@ -42,6 +42,7 @@ def add_ret_minus_market(
     RET_features: list,
     rolling_average: int = 1,
     group_col: str = "TS",
+    include_target: bool = False,
 ):
     n = len(RET_features)
     X = X.copy()
@@ -59,7 +60,7 @@ def add_ret_minus_market(
         last_ret = RET_features[i]  # the "today" return in that window
         X[f"SPREAD_{last_ret}"] = (X[last_ret] - X[alloc_col]) / X[std_col]
 
-    if "target" in X.columns:
+    if include_target:
         avg_col = f"AVG_PAST_PERF"
         X[avg_col] = X[RET_features[1 : rolling_average + 1]].mean(axis=1)
 
@@ -213,7 +214,7 @@ def scale_perf_features(
     #  .div(X[SIGNED_VOLUME_features].std(axis=1), axis=0))
 
     for col in SIGNED_VOLUME_features:
-        X["SCALED_" + col] = X[col] * 1e-4
+        X["SCALED_" + col] = X[col] * 1e-2
 
     return X
 
@@ -228,7 +229,7 @@ def add_mulitiply_col(
     for i in range(n):
         col_name = RET_features[i] + "_" + SIGNED_VOLUME_features[i]
         avg_col_name = "AVERAGE_" + col_name
-        X[col_name] = X[RET_features[i]] * X[SIGNED_VOLUME_features[i]]
+        X[col_name] = X[RET_features[i]] / X[SIGNED_VOLUME_features[i]]
         X[avg_col_name] = X.groupby("TS")[col_name].transform("mean")
 
     return X

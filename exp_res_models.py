@@ -1,7 +1,9 @@
 # %%
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, ElasticNet, LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+
 from sklearn.metrics import accuracy_score
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
@@ -11,7 +13,7 @@ import feature_engineering as fe
 
 # %% Load Data
 
-train = pd.read_csv("data/train.csv")
+train = pd.read_csv("data/train_unique.csv")
 X_val = pd.read_csv("data/X_val.csv")
 y_val = pd.read_csv("data/y_val.csv")
 
@@ -51,11 +53,11 @@ def feature_engineering(
         #     RET_features=RET_features,
         #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
         # )
-        .pipe(
-            fe.add_average_volume_features,
-            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
-            window_sizes=[3, 5, 10],
-        )
+        # .pipe(
+        #     fe.add_average_volume_features,
+        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        #     window_sizes=[3, 5, 10],
+        # )
         # .  pipe(fe.add_cross_sectional_features, base_cols=["RET_1", "RET_3"])
     )
 
@@ -78,23 +80,28 @@ features_res = features
 
 # %%
 target_name = "target"
+
 ridge_params = {
     "alpha": 1e-2,
     "fit_intercept": True,
     "random_state": 42,
 }
 
+linear_params = {
+    "fit_intercept": True,
+    "positive": True,
+}
+
 ridge_params_2 = {
-    "alpha": 1000,
+    "alpha": 100,
     "fit_intercept": True,
     "random_state": 42,
 }
 
-
 xgb_params = {
     "n_estimators": 100,
     "max_depth": 5,
-    "learning_rate": 0.01,
+    "learning_rate": 0.05,
     "subsample": 0.8,
     "colsample_bytree": 0.8,
     "random_state": 42,
@@ -102,18 +109,27 @@ xgb_params = {
 
 xgb_params_init = {
     "n_estimators": 100,
-    "max_depth": 5,
-    "learning_rate": 0.01,
+    "max_depth": 10,
+    "learning_rate": 0.001,
     "subsample": 0.8,
     "colsample_bytree": 0.8,
     "random_state": 42,
 }
 
+rf_params = {
+    "n_estimators": 100,
+    "max_depth": 5,
+    "min_samples_split": 5,
+    "min_samples_leaf": 3,
+    # "max_features": "sqrt",
+    "random_state": 42,
+    "n_jobs": -1,
+}
 
-general_model_cls = Ridge
-general_params = ridge_params
-residual_model_cls = Ridge
-residual_params = ridge_params_2
+general_model_cls = LinearRegression
+general_params = linear_params
+residual_model_cls = XGBRegressor
+residual_params = xgb_params_init
 # %%
 metrics = kfold_general_with_residuals(
     data=train,
@@ -122,7 +138,7 @@ metrics = kfold_general_with_residuals(
     features_res=features_res,
     unique_id="TS",
     feat_engineering=feature_engineering,
-    n_splits=4,
+    n_splits=5,
     general_model_cls=general_model_cls,
     general_params=general_params,
     residual_model_cls=residual_model_cls,
@@ -139,7 +155,7 @@ if feature_engineering:
 
 X_train = train[features]
 y_train = train[target_name]
-# %%train = feature_engineering(train)
+# %%
 
 res_model = ResidualModel(
     general_model_cls=general_model_cls,
@@ -178,7 +194,7 @@ if feature_engineering:
 
 preds_sub = res_model.predict(X_test, features, features_res)
 preds_sub = pd.DataFrame(preds_sub, index=X_test["ROW_ID"], columns=[target_name])
-(preds_sub > 0).astype(int).to_csv("predictions/preds_res_model_v8.csv")
+(preds_sub > 0).astype(int).to_csv("predictions/preds_res_model_last.csv")
 
 # print("Prediction file saved.")
 print("Positive rate:", (preds_sub > 0).mean().values[0])
