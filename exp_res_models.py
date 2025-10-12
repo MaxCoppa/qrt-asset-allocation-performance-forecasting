@@ -13,7 +13,7 @@ import feature_engineering as fe
 
 # %% Load Data
 
-train = pd.read_csv("data/train_unique.csv")
+train = pd.read_csv("data/train.csv")
 X_val = pd.read_csv("data/X_val.csv")
 y_val = pd.read_csv("data/y_val.csv")
 
@@ -117,7 +117,7 @@ xgb_params_init = {
 }
 
 rf_params = {
-    "n_estimators": 100,
+    "n_estimators": 50,
     "max_depth": 5,
     "min_samples_split": 5,
     "min_samples_leaf": 3,
@@ -126,10 +126,10 @@ rf_params = {
     "n_jobs": -1,
 }
 
-general_model_cls = LinearRegression
-general_params = linear_params
-residual_model_cls = XGBRegressor
-residual_params = xgb_params_init
+general_model_cls = Ridge
+general_params = ridge_params
+residual_model_cls = Ridge
+residual_params = ridge_params_2
 # %%
 metrics = kfold_general_with_residuals(
     data=train,

@@ -9,16 +9,7 @@ X_train = pd.read_csv("data/X_train.csv")
 X_test = pd.read_csv("data/X_test.csv")
 y_train = pd.read_csv("data/y_train.csv")
 
-# %%
-
-save = False
-
-df_unique = extract_unique_train(
-    train=X_train,
-    allocation="ALLOCATION_01",
-    output_csv="data/train_unique.csv",
-    save=save,
-)
+save = True
 
 # %%
 n_val = int(172445 * 0.1 / X_train["ALLOCATION"].nunique())
@@ -33,3 +24,12 @@ if save:
     y_val.to_csv("data/y_val.csv", index=False)
 
 # %%
+
+df_unique = extract_unique_train(
+    data=train,
+    allocation="ALLOCATION_01",
+    output_csv="data/train_unique.csv",
+    save=save,
+)
+
+# %% 

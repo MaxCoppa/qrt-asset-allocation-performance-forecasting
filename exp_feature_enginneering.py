@@ -6,7 +6,7 @@ import feature_engineering as fe
 
 # %% Load Data
 
-train = pd.read_csv("data/train.csv")
+train = pd.read_csv("data/train_unique.csv")
 X_val = pd.read_csv("data/X_val.csv")
 y_val = pd.read_csv("data/y_val.csv")
 
@@ -35,11 +35,11 @@ def feature_engineering(
             window_sizes=window_sizes,
             group_col="TS",
         )
-        # .pipe(
-        #     fe.add_mulitiply_col,
-        #     RET_features=RET_features,
-        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
-        # )
+        .pipe(
+            fe.add_mulitiply_col,
+            RET_features=RET_features,
+            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        )
         # .pipe(
         #     fe.add_statistical_features,
         #     RET_features=RET_features,
@@ -64,7 +64,7 @@ features = [
 # %%
 target_name = "target"
 unique_id = "TS"
-model_name = "ridge_benchmark"
+model_name = "xgb"
 # %% Model Selection Evaluation
 
 model_selection_using_kfold(
