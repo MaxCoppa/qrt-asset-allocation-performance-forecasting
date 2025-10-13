@@ -123,18 +123,18 @@ Both solutions were consistent: one fully linear and strongly regularized, the o
   - `selection/`: model selection procedures  
   - `tuning/`: hyperparameter tuning modules  
 
-- `deep_learning_models/`: deep learning experiments  
+- `deep_learning_models/`: deep learning models and training  
 
 - `data/`: dataset folder  
 - `predictions/`: model predictions  
-- `experiments/`: scripts for experimental workflows  
+- `experiments/`: scripts for experimental workflows  be careful to install the module `pip install -e .`to test
 
-- `pyproject.toml`  
+- `pyproject.toml`: project configuration and dependency management file
 
-- `base_prediction.py`: baseline predictions on raw dataset  
-- `exp_feature_engineering.py`: feature engineering experiments  
-- `exp_res_models.py`: residual modeling experiments  
-- `preprocess_data.py`: preprocessing and validation dataset construction  
+- `base_prediction.py`: notebook style script, baseline predictions on raw dataset  
+- `exp_feature_engineering.py`: notebook style script, feature engineering experiments  
+- `exp_res_models.py`: notebook style script, residual modeling experiments  
+- `preprocess_data.py`: notebook style script, preprocessing and validation dataset construction  
 
 - `benchmark_submission.ipynb`: QRT benchmark baseline  
 - `visualise_data.ipynb`: exploratory visualization of raw data
