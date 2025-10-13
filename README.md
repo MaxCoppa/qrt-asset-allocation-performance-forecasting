@@ -131,9 +131,9 @@ Both solutions were consistent: one fully linear and strongly regularized, the o
 
 - `pyproject.toml`: project configuration and dependency management file
 
-- `base_prediction.py`: notebook style script, baseline predictions on raw dataset  
-- `exp_feature_engineering.py`: notebook style script, feature engineering experiments  
-- `exp_res_models.py`: notebook style script, residual modeling experiments  
+- `base_prediction.ipynb`: baseline predictions on raw dataset  
+- `exp_feature_engineering.ipynb`: feature engineering experiments  
+- `exp_res_models.ipynb`: residual modeling experiments  
 - `preprocess_data.py`: notebook style script, preprocessing and validation dataset construction  
 
 - `benchmark_submission.ipynb`: QRT benchmark baseline  
