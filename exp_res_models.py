@@ -16,7 +16,7 @@ train = pd.read_csv("data/train.csv")
 X_val = pd.read_csv("data/X_val.csv")
 y_val = pd.read_csv("data/y_val.csv")
 
-# %%
+# %% Features Names
 RET_features = [f"RET_{i}" for i in range(1, 21)]
 SIGNED_VOLUME_features = [f"SIGNED_VOLUME_{i}" for i in range(1, 21)]
 TURNOVER_features = ["AVG_DAILY_TURNOVER"]
@@ -40,11 +40,7 @@ def feature_engineering(
 
 
 X_feat = feature_engineering(train)
-# %%
-
-
-features = [col for col in X_feat.columns if col not in ["ROW_ID", "TS", "target"]]
-
+# %% Define Features for model
 features = [
     col
     for col in X_feat.columns
@@ -53,7 +49,8 @@ features = [
 features_res = features
 
 
-# %%
+# %% Define Model Parameters
+
 target_name = "target"
 
 linear_params = {
@@ -97,7 +94,7 @@ general_model_cls = Ridge
 general_params = ridge_params
 residual_model_cls = Ridge
 residual_params = ridge_params_2
-# %%
+# %% Perform Kfold Validation
 metrics = kfold_general_with_residuals(
     data=train,
     target=target_name,
@@ -113,8 +110,7 @@ metrics = kfold_general_with_residuals(
 )
 
 
-# %%
-# Define features (exclude target + ID + TS but keep ALLOCATION)
+# %% Model Training and prediction
 
 if feature_engineering:
     train = feature_engineering(train)
@@ -122,7 +118,6 @@ if feature_engineering:
 
 X_train = train[features]
 y_train = train[target_name]
-# %%
 
 res_model = ResidualModel(
     general_model_cls=general_model_cls,
@@ -132,8 +127,7 @@ res_model = ResidualModel(
 )
 res_model.fit(train, target_name, features, features_res)
 
-# %%
-# Predictions
+# %% Predictions
 y_pred_val = res_model.predict(X_val, features, features_res)
 
 # Accuracy on sign (>0)
@@ -141,7 +135,7 @@ y_true_bin = (y_val[target_name] > 0).astype(int)
 y_pred_bin = (y_pred_val > 0).astype(int)
 
 print("Residual Model accuracy:", accuracy_score(y_true_bin, y_pred_bin))
-# %%
+# %% Model Prediction on test
 X_test = pd.read_csv("data/X_test.csv")
 
 for i in range(1, X_test.shape[1] - 1):  # FillNA Variable

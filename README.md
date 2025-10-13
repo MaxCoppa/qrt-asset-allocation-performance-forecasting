@@ -41,9 +41,9 @@ Preliminary insights:
 
 Validation strategies tested:
 
-- **K-Fold on `row_id`** → leakage due to shared timestamps between train/validation.  
-- **Time-series split** → more realistic, but leakage remained due to duplicate rows.  
-- **Hold-out validation set** → slightly improved robustness but still imperfect.  
+- **K-Fold on `row_id`** -> leakage due to shared timestamps between train/validation.  
+- **Time-series split** -> more realistic, but leakage remained due to duplicate rows.  
+- **Hold-out validation set** -> slightly improved robustness but still imperfect.  
 - **Final approach**: removal of duplicate rows and construction of a cleaner training set with strict time splits.
 
 **Takeaway**: strict temporal validation and deduplication are essential to avoid inflated performance estimates.
@@ -85,12 +85,12 @@ Both failed to converge meaningfully due to limited sequence length (20 days) an
 ### Residual Modeling (Final Approach)
 The modeling framework assumed:
 
-\[
+$$
 \text{Return} = \text{Market Component} + \text{Allocation-Specific Component}
-\]
+$$
 
 1. Train a global model across all allocations to capture the market component.  
-2. Train allocation-specific models on residuals (\(y - y_{market}\)).  
+2. Train allocation-specific models on residuals $ y - y_{market}$.  
 3. Combine both predictions.
 
 This mirrored the underlying market structure while remaining data-efficient.
@@ -100,8 +100,8 @@ This mirrored the underlying market structure while remaining data-efficient.
 ## Results
 
 - **Competition model (Leaderboard: 52.883)**  
-  - Market: Ridge regression (α = 1e-2)  
-  - Allocation: Ridge regression (α = 100)  
+  - Market: Ridge regression $(\alpha = 1e-2)$
+  - Allocation: Ridge regression $(\alpha = 100)$ 
 
 - **Final best private leaderboard model (Leaderboard: 53.193)**  
   - Market: Linear regression (fit_intercept = True, positive = True)  

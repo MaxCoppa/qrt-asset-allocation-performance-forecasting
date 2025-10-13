@@ -10,7 +10,7 @@ train = pd.read_csv("data/train.csv")
 X_val = pd.read_csv("data/X_val.csv")
 y_val = pd.read_csv("data/y_val.csv")
 
-# %%
+# %% Define Features names
 RET_features = [f"RET_{i}" for i in range(1, 21)]
 SIGNED_VOLUME_features = [f"SIGNED_VOLUME_{i}" for i in range(1, 21)]
 TURNOVER_features = ["AVG_DAILY_TURNOVER"]
@@ -55,7 +55,7 @@ features = [
     for col in X_feat.columns
     if col not in ["ROW_ID", "TS", "ALLOCATION", "target"] + SIGNED_VOLUME_features
 ]
-# %%
+# %% Define Parameters
 target_name = "target"
 unique_id = "TS"
 model_name = "xgb"
