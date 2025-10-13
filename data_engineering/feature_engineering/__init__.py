@@ -9,12 +9,12 @@ __all__ = [
     "add_ratio_difference_features",
     "add_near_time_comparison_features",
     "add_cross_sectional_features",
-    "scale_perf_features",
     "add_return_to_volume_ratio",
     "add_lagged_features",
     "add_rolling_corr_features",
     "add_vol_adjusted_returns",
     "add_strategy_features",
+    "scale_features",
 ]
 
 

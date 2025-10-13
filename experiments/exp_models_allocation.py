@@ -29,7 +29,7 @@ def feature_engineering(
 ) -> pd.DataFrame:
     X = (
         X.pipe(
-            fe.add_mulitiply_col,
+            fe.add_return_to_volume_ratio,
             RET_features=RET_features,
             SIGNED_VOLUME_features=SIGNED_VOLUME_features,
         )
@@ -60,20 +60,19 @@ features = [
     for col in X_feat.columns
     if col not in ["ROW_ID", "TS", "ALLOCATION", "target"]  # + SIGNED_VOLUME_features
 ]
-# %% Load Data
 
-# train = feature_engineering(train)
-# X_val = feature_engineering(X_val)
+train = feature_engineering(train)
+X_val = feature_engineering(X_val)
 
 # %% Configuration
 
 features = [
     col for col in train.columns if col not in ["ROW_ID", "TS", "ALLOCATION", "target"]
 ]
-# features = [f"RET_{i}" for i in range(1, 21)]
+
 target_name = "target"
 unique_id = "TS"
-model_name = "rf"
+model_name = "ridge"
 
 # %% Model Selection Evaluation
 

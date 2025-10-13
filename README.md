@@ -6,90 +6,135 @@ Can you predict whether a given asset allocation is worth following—or shortin
 ## Challenge
 
 - Predict the sign of returns using:
-  - Signed Volume (lagged -20)
-  - Returns (lagged -20)
+  - Signed Volume (lagged up to 20 periods)
+  - Returns (lagged up to 20 periods)
   - Average Daily Turnover (ADT)
-- Multivariate dataset of 65 allocations
+
+- Dataset: multivariate, 65 allocations  
+  Columns:  
+  `['ROW_ID', 'TS', 'ALLOCATION', 'RET_20', 'RET_19', ..., 'RET_1', 'SIGNED_VOLUME_20', ..., 'SIGNED_VOLUME_1', 'AVG_DAILY_TURNOVER']`
+
+- Objective:  
+  Predict the sign of the most recent return from the given lagged features.
+
+### Key Lessons
+- Careful model validation and awareness of data leakage are essential.
+- Focus on extracting signal rather than fitting noise; avoid overly complex models prone to overfitting.
+- Data engineering and preprocessing strongly influence model stability.
+- Leaderboards can be misleading; always validate results rigorously.
 
 ---
 
 ## Data
 
-- Train: 2773 dates, shape (180245, 44)  
-- y_train: shape (180245, 2)  
-- Test: shape (7735, 44)
+- Train: 2773 dates, shape (180,245 × 44)  
+- y_train: shape (180,245 × 2)  
+- Test: shape (7,735 × 44)
 
-First insights:
-- Volumes correlated across allocations
-- Strong differences in turnover depending on allocation style/management
+Preliminary insights:
+- Volumes are correlated across allocations.
+- Turnover differs substantially by allocation style/management.
 
 ---
 
 ## Model Validation
 
-Cross Validation:
+Validation strategies tested:
 
-- K-Fold on row_id → leakage due to shared TS between train/val  
-- Time-series split → more realistic, but still some leakage from duplicate rows  
-- Holdout a validation dataset → slightly better but not fully robust  
-- Final approach: identify duplicates and build a cleaner training set
+- **K-Fold on `row_id`** → leakage due to shared timestamps between train/validation.  
+- **Time-series split** → more realistic, but leakage remained due to duplicate rows.  
+- **Hold-out validation set** → slightly improved robustness but still imperfect.  
+- **Final approach**: removal of duplicate rows and construction of a cleaner training set with strict time splits.
 
-Takeaway: strict time splits and deduplication are essential. Find the best data to train and validate !
+**Takeaway**: strict temporal validation and deduplication are essential to avoid inflated performance estimates.
 
 ---
 
 ## Feature Engineering
 
-Feature engineering focused on simple, robust signals rather than aggressive transformations, since the data were noisy and prone to overfitting.  
+A restrained feature engineering strategy was adopted to minimize noise amplification:
 
-- Market-level information: benchmark features were created to incorporate average market trends across allocations, helping the model account for common dynamics.  
-- Statistical features: rolling averages, spreads, and other descriptive statistics were tested to summarize short-term patterns and relative movements.  
-- Signed volume: explored through one-hot encodings (long/short) and considered as a link between traded volume and allocation returns. However, this did not lead to meaningful improvements and was eventually dropped.  
-- Allocation identifiers: one-hot encoded, allowing the models to recognize and adjust for allocation-specific styles or biases.  
-- Average daily turnover: identified as an important input feature, though additional transformations did not improve results; it was kept in raw form.  
+- **Market-level features**: benchmark signals summarizing average trends across allocations.  
+- **Statistical descriptors**: rolling averages, spreads, and short-term descriptive statistics.  
+- **Signed volume**: explored through categorical encodings (long/short), but no consistent benefit; ultimately dropped.  
+- **Allocation identifiers**: one-hot encoded to capture allocation-specific biases.  
+- **Average Daily Turnover**: important feature retained in raw form.
 
-
-This restrained approach kept the features interpretable and avoided introducing unstable noise.
+This design prioritized interpretability and stability over aggressive transformations.
 
 ---
 
-## Model Approach : 
+## Model Approaches
 
-Main ideas : 
-- Predict General Trend on all the Data ? 
-- Predict "Model" per allocation : strategy of the allocation ? 
-- Improve Modelisation of the market ?
+### Main Research Directions
+- Unified model across all allocations to capture general market trends.  
+- Allocation-specific models to capture strategy/style deviations.  
+- Improved formulations of market–allocation decomposition.
 
 ### Deep Learning Experiments
-Two directions were tested:  
-- Autoencoder + MLP, inspired by Jane Street’s market prediction approaches, to denoise the data and learn latent structures of allocations.  
-- LSTM with attention to capture short time-series dependencies and cross-allocation information.  
+- **Autoencoder + MLP**: tested for denoising and latent representation learning.  
+- **LSTM with attention**: aimed at capturing short-term dependencies.  
 
-Both approaches failed to converge meaningfully. The 20-day rolling window was too short, and the limited per-allocation data (~2000 rows) prevented stable learning. More data and deeper expertise in time-series deep learning would be needed for such methods to succeed.  
+Both failed to converge meaningfully due to limited sequence length (20 days) and insufficient per-allocation data (~2000 samples). More extensive data and advanced architectures would be required.
 
-### Machine Learning Models
-- Highly tuned and deep tree-based models overfit and failed under robust validation.  
-- Simpler models with stronger regularization, like ridge or linear regression, consistently performed better.  
-- The high noise level made these regularized approaches more stable and reliable.  
+### Machine Learning Experiments
+- Complex tree ensembles overfit and performed poorly under robust validation.  
+- Simpler, regularized models (ridge regression, linear regression) achieved more stable results.  
+- Regularization was critical in controlling noise and variance.
 
 ### Residual Modeling (Final Approach)
-The final model design assumed that return = market component + allocation-specific component.  
+The modeling framework assumed:
 
-1. Train a model across all allocations to capture the market component (general pattern).  
-2. For each allocation, train a second model on the residuals (y − y_market) to capture allocation-specific deviations.  
-3. Combine both predictions for the final forecast.  
+\[
+\text{Return} = \text{Market Component} + \text{Allocation-Specific Component}
+\]
 
-This framework mirrored a key structure of the problem: market conditions shape overall movement, while allocations add their own style or strategy on top. It also matched the limited amount of per-allocation data by using a simple but structured approach.
+1. Train a global model across all allocations to capture the market component.  
+2. Train allocation-specific models on residuals (\(y - y_{market}\)).  
+3. Combine both predictions.
 
-### Best socres
+This mirrored the underlying market structure while remaining data-efficient.
 
+---
 
-- My selected model for competition  (LB = 52.883) 
-  - Market component: Ridge regression (alpha = 1e-2)  
-  - Allocation component: Ridge regression (alpha = 100)  
+## Results
 
-- My final best private leaderboard model (LB = 53.193)  
-  - Market component: Linear regression (fit_intercept = True, positive = True)  
-  - Allocation component: Random forest (shallow, regularized)  
+- **Competition model (Leaderboard: 52.883)**  
+  - Market: Ridge regression (α = 1e-2)  
+  - Allocation: Ridge regression (α = 100)  
 
-These represent consistent approaches: one purely linear and regularized (ridge + ridge), and one combining a simple linear market baseline with a lightweight non-linear learner for allocation residuals.  
+- **Final best private leaderboard model (Leaderboard: 53.193)**  
+  - Market: Linear regression (fit_intercept = True, positive = True)  
+  - Allocation: Shallow, regularized random forest  
+
+Both solutions were consistent: one fully linear and strongly regularized, the other combining linear market modeling with lightweight non-linear residual learning.
+
+---
+
+## Project Structure
+
+- `data_engineering/`  
+  - `data_preprocessing/`: preprocessing utilities  
+  - `feature_engineering/`: feature construction functions  
+
+- `tree_based_models/`  
+  - `evaluation/`: evaluation utilities  
+  - `models/`: model initialization and parameters  
+  - `selection/`: model selection procedures  
+  - `tuning/`: hyperparameter tuning modules  
+
+- `deep_learning_models/`: deep learning experiments  
+
+- `data/`: dataset folder  
+- `predictions/`: model predictions  
+- `experiments/`: scripts for experimental workflows  
+
+- `pyproject.toml`  
+
+- `base_prediction.py`: baseline predictions on raw dataset  
+- `exp_feature_engineering.py`: feature engineering experiments  
+- `exp_res_models.py`: residual modeling experiments  
+- `preprocess_data.py`: preprocessing and validation dataset construction  
+
+- `benchmark_submission.ipynb`: QRT benchmark baseline  
+- `visualise_data.ipynb`: exploratory visualization of raw data

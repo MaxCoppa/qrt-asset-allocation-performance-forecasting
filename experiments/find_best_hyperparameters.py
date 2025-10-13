@@ -40,8 +40,6 @@ def feature_engineering(
             fe.add_average_volume_features,
             SIGNED_VOLUME_features=SIGNED_VOLUME_features,
         )
-        .pipe(fe.create_mean_allocation, dict_mean=dict_mean)
-        .pipe(fe.add_cross_sectional_features, base_cols=["RET_1", "RET_3"])
     )
 
     return X

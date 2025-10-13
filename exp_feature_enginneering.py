@@ -6,7 +6,7 @@ from data_engineering import feature_engineering as fe
 
 # %% Load Data
 
-train = pd.read_csv("data/train_unique.csv")
+train = pd.read_csv("data/train.csv")
 X_val = pd.read_csv("data/X_val.csv")
 y_val = pd.read_csv("data/y_val.csv")
 
@@ -23,32 +23,27 @@ def feature_engineering(
     X: pd.DataFrame,
 ) -> pd.DataFrame:
     X = (
-        X
-        # .pipe(
-        #     fe.scale_perf_features,
-        #     RET_features=RET_features,
-        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
-        # )
+        X.pipe(
+            fe.scale_features,
+            RET_features=RET_features,
+            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        )
         .pipe(
             fe.add_average_perf_features,
             RET_features=RET_features,
             window_sizes=window_sizes,
             group_col="TS",
-        ).pipe(
-            fe.add_mulitiply_col,
+        )
+        .pipe(
+            fe.add_return_to_volume_ratio,
             RET_features=RET_features,
             SIGNED_VOLUME_features=SIGNED_VOLUME_features,
         )
-        # .pipe(
-        #     fe.add_statistical_features,
-        #     RET_features=RET_features,
-        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
-        # )
-        # .pipe(
-        #     fe.add_average_volume_features,
-        #     SIGNED_VOLUME_features=SIGNED_VOLUME_features,
-        # )
-        # .pipe(fe.encode_allocation)
+        .pipe(
+            fe.add_statistical_features,
+            RET_features=RET_features,
+            SIGNED_VOLUME_features=SIGNED_VOLUME_features,
+        )
     )
 
     return X
@@ -89,21 +84,15 @@ _ = evaluate_model(
 )
 # %% Predicion
 
-X_train = pd.read_csv("data/X_train.csv")
-y_train = pd.read_csv("data/y_train.csv")
 X_test = pd.read_csv("data/X_test.csv")
 
+if feature_engineering:
+    X_test = feature_engineering(X_test)
 
-X_train = feature_engineering(X_train)
-X_test = feature_engineering(X_test)
-
-
-model = get_model(model_name)
-model.fit(X_train[features], y_train[target_name])
 
 preds_sub = model.predict(X_test[features])
 preds_sub = pd.DataFrame(preds_sub, index=X_test["ROW_ID"], columns=[target_name])
 preds_sub["target"] = 1
-(preds_sub > 0).astype(int).to_csv(f"predictions/preds_{model_name}.csv")
-# %%
+
+# (preds_sub > 0).astype(int).to_csv(f"predictions/preds_{model_name}.csv")
 # %%
