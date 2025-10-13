@@ -73,8 +73,9 @@ model_selection_using_kfold(
 )
 # %% Train Model
 
-train = feature_engineering(train)
-X_val = feature_engineering(X_val)
+if feature_engineering:
+    train = feature_engineering(train)
+    X_val = feature_engineering(X_val)
 
 model = get_model(model_name)
 model.fit(train[features], train[target_name])
