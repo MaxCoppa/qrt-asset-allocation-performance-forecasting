@@ -31,6 +31,5 @@ preds_sub = pd.DataFrame(
     (preds_sub > 0).astype(int), index=X_test["ROW_ID"], columns=["target"]
 )
 
-# %%
-preds_sub.to_csv("predictions/dummy_prediction_v2.csv")
+# preds_sub.to_csv("predictions/dummy_prediction_v2.csv")
 # %%

@@ -32,7 +32,6 @@ df_wide.columns = [f"{a}_{f}" for f, a in df_wide.columns]
 df_wide = df_wide.reset_index()
 
 print(df_wide.shape)
-print(df_wide.head())
 
 # %% PCA Pipeline
 pca_pipeline = Pipeline(
@@ -60,4 +59,5 @@ y_train_pred = reg.predict(X_train_pca)
 y_val_pred = reg.predict(X_val_pca)
 
 print("Validation Accuracy:", accuracy_score(y_val > 0, y_val_pred > 0))
-print("Validation R2:", r2_score(y_val, y_val_pred))
+
+# %%

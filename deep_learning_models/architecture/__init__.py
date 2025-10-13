@@ -5,6 +5,6 @@ __all__ = [
     "CrossSeriesModel",
 ]
 
-from .jane_street_model import AE_BottleneckMLP
+from .js_model import AE_BottleneckMLP
 from .rnn_model import GRUModel, LSTMModel
 from .rnn_attention_model import CrossSeriesModel

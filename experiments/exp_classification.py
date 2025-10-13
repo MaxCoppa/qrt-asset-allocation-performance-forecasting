@@ -1,7 +1,7 @@
 # %%
 import pandas as pd
 from tree_based_models import model_selection_using_kfold, get_model, evaluate_model
-import feature_engineering as fe
+from data_engineering import feature_engineering as fe
 
 
 # %% Load Data
@@ -73,20 +73,11 @@ _ = evaluate_model(
 )
 # %% Predicion
 
-X_train = pd.read_csv("../data/X_train.csv")
-y_train = pd.read_csv("../data/y_train.csv")
 X_test = pd.read_csv("../data/X_test.csv")
 
-
-X_train = feature_engineering(X_train)
 X_test = feature_engineering(X_test)
-
-
-model = get_model(model_name)
-model.fit(X_train[features], y_train[target_name])
 
 preds_sub = model.predict(X_test[features])
 preds_sub = pd.DataFrame(preds_sub, index=X_test["ROW_ID"], columns=[target_name])
 preds_sub["target"] = 1
-(preds_sub > 0).astype(int).to_csv(f"predictions/preds_{model_name}.csv")
 # %%

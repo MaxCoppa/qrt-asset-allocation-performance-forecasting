@@ -33,9 +33,9 @@ allocation_name = "ALLOCATION_01"
 unique_id = "TS"
 
 params = {
-    "enc_units": [8],  # encoder layers
-    "dec_units": [8],  # decoder layers (mirror or custom)
-    "mlp_units": [2],  # classifier layers
+    "enc_units": [8],
+    "dec_units": [8],
+    "mlp_units": [2],
     "dropout_rate": 0.1,
     "lr": 0.5,
     "num_epochs": 40,
@@ -46,7 +46,7 @@ params = {
 }
 
 # %% Cross Validation for NN
-nn_model_selection_using_kfold(
+_ = nn_model_selection_using_kfold(
     data=data.copy(),
     features=features,
     allocation_name=allocation_name,

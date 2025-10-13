@@ -8,7 +8,7 @@ from sklearn.model_selection import KFold
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score
 
-from ..architecture.jane_street_model import AE_BottleneckMLP
+from ..architecture.js_model import AE_BottleneckMLP
 
 
 def nn_model_selection_using_kfold(
