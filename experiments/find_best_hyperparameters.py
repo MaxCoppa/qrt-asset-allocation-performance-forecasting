@@ -1,6 +1,6 @@
 # %%
 import pandas as pd
-import feature_engineering as fe
+from data_engineering import feature_engineering as fe
 from tree_based_models import tune_model
 
 # %% Load Data

@@ -1,7 +1,6 @@
 # %%
 import pandas as pd
 from tree_based_models import model_selection_using_kfold, get_model, evaluate_model
-from feature_engineering import split_data
 
 # %% Load Data
 

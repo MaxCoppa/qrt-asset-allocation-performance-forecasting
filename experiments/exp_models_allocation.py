@@ -4,7 +4,7 @@ import numpy as np
 from tree_based_models import model_selection_by_allocation, get_model, evaluate_model
 from tqdm import tqdm
 
-import feature_engineering as fe
+from data_engineering import feature_engineering as fe
 
 # %% Load Data
 

@@ -5,7 +5,7 @@ from tree_based_models import (
     evaluate_model_market,
     model_selection_respect_market,
 )
-import feature_engineering as fe
+from data_engineering import feature_engineering as fe
 
 
 # %% Load Data

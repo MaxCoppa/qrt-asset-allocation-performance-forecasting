@@ -1,7 +1,7 @@
 # %%
-import feature_engineering as fe
+from data_engineering import feature_engineering as fe
 import pandas as pd
-from feature_engineering import split_data, extract_unique_train
+from data_engineering.data_preprocessing import split_data, extract_unique_train
 
 # %% Load Data
 
@@ -32,4 +32,4 @@ df_unique = extract_unique_train(
     save=save,
 )
 
-# %% 
+# %%

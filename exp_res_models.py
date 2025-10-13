@@ -8,8 +8,7 @@ from sklearn.metrics import accuracy_score
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 from tree_based_models import kfold_general_with_residuals, ResidualModel
-import feature_engineering as fe
-
+from data_engineering import feature_engineering as fe
 
 # %% Load Data
 
